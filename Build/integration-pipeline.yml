@@ -1,0 +1,91 @@
+# Integration pipeline for BiDiB-Library.Core
+
+name: BiDiB-Library.Core.Integration_$(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
+
+trigger:
+  batch: true
+  branches:
+    include:
+      - "*"
+    exclude:
+      - main
+      - refs/pull/*
+
+pool:
+  vmImage: "windows-2022"
+
+variables:
+  - template: variables.yml
+
+steps:
+  - checkout: self
+    persistCredentials: true
+
+  - task: NuGetToolInstaller@1
+
+  - task: NuGetCommand@2
+    inputs:
+      command: "restore"
+      restoreSolution: '$(solution)'
+      feedsToUse: "config"
+      nugetConfigPath: "nuget.config"
+
+  - task: PowerShell@2
+    inputs:
+      targetType: "inline"
+      script: |
+        $date=$(Get-Date -Format ddMMyyy);
+        Write-Host "##vso[task.setvariable variable=BuildDate]$date"
+
+  - task: VSBuild@1
+    inputs:
+      solution: '$(solution)'
+      platform: "$(buildPlatform)"
+      configuration: "$(buildConfiguration)"
+      msbuildArgs: "/p:DeployOnBuild=true /p:DeployTarget=Package;CreatePackageOnPublish=true"
+
+  - task: VSTest@2
+    continueOnError: true
+    inputs:
+      testSelector: "testAssemblies"
+      testAssemblyVer2: |
+        **\*.Test.dll
+        !**\*TestAdapter.dll
+        !**\obj\**
+      searchFolder: "$(System.DefaultWorkingDirectory)"
+      testFiltercriteria: TestCategory=UnitTest|TestCategory=IntegrationTest
+      codeCoverageEnabled: true
+      runSettingsFile: '$(System.DefaultWorkingDirectory)\CodeCoverage.runsettings'
+
+  - task: BuildQualityChecks@8
+    continueOnError: true
+    inputs:
+      checkWarnings: true
+      warningFailOption: "build"
+      showStatistics: true
+      checkCoverage: true
+      coverageFailOption: "build"
+      coverageType: "blocks"
+      coveragePrecision: "0"
+      forceCoverageImprovement: true
+      coverageUpperThreshold: "70"
+      baseDefinitionId: 21
+      baseBranchRef: "refs/heads/master"
+  
+  - task: NuGetAuthenticate@1
+
+  - task: NuGetCommand@2
+    inputs:
+      command: 'pack'
+      packagesToPack: 'BiDiB-Library.Core/*.csproj'
+      versioningScheme: byPrereleaseNumber
+      majorVersion: '0'
+      minorVersion: '0'
+      patchVersion: '1-Dev$(Build.BuildId)'
+
+  - task: NuGetCommand@2
+    inputs:
+      command: 'push'
+      packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+      nuGetFeedType: 'internal'
+      publishVstsFeed: '11cfb857-a459-41bf-a18f-5b64083932ef/7c0f4f40-53aa-4b6d-89b8-e0d0c65737a3'

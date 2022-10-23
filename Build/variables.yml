@@ -1,0 +1,6 @@
+variables:
+  solution: "BiDiB-Library.Core.sln"
+  buildPlatform: "Any CPU"
+  buildConfiguration: "Release"
+  version: "0.0"
+  version.build: "$(version).$(Build.BuildId)"
