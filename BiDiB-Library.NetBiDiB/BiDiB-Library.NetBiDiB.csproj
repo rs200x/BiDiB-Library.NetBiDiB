@@ -1,29 +1,41 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <AssemblyName>org.bidib.netbidibc.netbidib</AssemblyName>
-    <RootNamespace>org.bidib.netbidibc.netbidib</RootNamespace>
-      <TargetFramework>net6.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <BclBuildImported>Ignore</BclBuildImported>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-  </PropertyGroup>
-  
-  <ItemGroup>
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-      <_Parameter1>org.bidib.netbidibc.netbidib.Test</_Parameter1>
-    </AssemblyAttribute>
-  </ItemGroup>
-  
+	<PropertyGroup>
+		<AssemblyName>org.bidib.netbidibc.netbidib</AssemblyName>
+		<RootNamespace>org.bidib.netbidibc.netbidib</RootNamespace>
+		<TargetFramework>net6.0</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<BclBuildImported>Ignore</BclBuildImported>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="org.bidib.netbidibc.core" Version="0.0.1-Dev1769-CI-20221023-142847" />
-  </ItemGroup>
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>org.bidib.netbidibc.netbidib.Test</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Message\" />
-  </ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+	</ItemGroup>
+
+	<Choose>
+		<When Condition="'$(Configuration)'=='Debug' ">
+			<ItemGroup>
+				<ProjectReference Include="..\..\Core\BiDiB-Library.Core\BiDiB-Library.Core.csproj" />
+			</ItemGroup>
+		</When>
+		<When Condition="'$(Configuration)'=='Release' ">
+			<ItemGroup>
+				<PackageReference Include="org.bidib.netbidibc.core" Version="1.0.1-dev.28" />
+			</ItemGroup>
+		</When>
+	</Choose>
+
+	<ItemGroup>
+		<Folder Include="Message\" />
+	</ItemGroup>
 
 </Project>

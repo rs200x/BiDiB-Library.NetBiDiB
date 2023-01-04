@@ -1,20 +1,20 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using org.bidib.netbidibc.netbidib.Message;
 using org.bidib.netbidibc.core;
 using org.bidib.netbidibc.core.Enumerations;
 using org.bidib.netbidibc.core.Message;
 using org.bidib.netbidibc.core.Models.Messages.Output;
-using org.bidib.netbidibc.core.Test;
+using org.bidib.netbidibc.netbidib.Message;
+using org.bidib.netbidibc.Testing;
 using LocalLinkMessage = org.bidib.netbidibc.core.Models.Messages.Input.LocalLinkMessage;
 using LocalLinkOutputMessage = org.bidib.netbidibc.core.Models.Messages.Output.LocalLinkMessage;
 using ProtocolSignatureOutMessage = org.bidib.netbidibc.core.Models.Messages.Output.ProtocolSignatureMessage;
 using ProtocolSignatureInMessage = org.bidib.netbidibc.core.Models.Messages.Input.ProtocolSignatureMessage;
-using Microsoft.Extensions.Logging.Abstractions;
 
-namespace BiDiBLib.NetBiDiB.Test.Message
+namespace org.bidib.netbidibc.netbidib.test.Message
 {
     [TestClass]
     [TestCategory(TestCategory.UnitTest)]
@@ -28,7 +28,7 @@ namespace BiDiBLib.NetBiDiB.Test.Message
         {
             base.OnTestInitialize();
 
-            target = new NetBiDiBMessageProcessor(NullLogger<NetBiDiBMessageProcessor>.Instance);
+            target = new NetBiDiBMessageProcessor(NullLoggerFactory.Instance);
             BiDiBMessageGenerator.SecureMessages = false;
         }
 

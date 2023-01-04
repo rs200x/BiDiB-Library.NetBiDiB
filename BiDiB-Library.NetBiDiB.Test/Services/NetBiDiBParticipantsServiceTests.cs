@@ -1,10 +1,11 @@
 ﻿using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using org.bidib.netbidibc.netbidib.Models;
 using org.bidib.netbidibc.netbidib.Services;
 using org.bidib.netbidibc.core.Services.Interfaces;
-using org.bidib.netbidibc.core.Test;
+using org.bidib.netbidibc.Testing;
 
 namespace org.bidib.netbidibc.netbidib.test.Services
 {
@@ -22,7 +23,7 @@ namespace org.bidib.netbidibc.netbidib.test.Services
             ioService = new Mock<IIoService>();
             jsonService = new Mock<IJsonService>();
 
-            Target = new NetBiDiBParticipantsService(ioService.Object, jsonService.Object);
+            Target = new NetBiDiBParticipantsService(ioService.Object, jsonService.Object, NullLoggerFactory.Instance);
         }
 
         [TestMethod]
@@ -35,7 +36,7 @@ namespace org.bidib.netbidibc.netbidib.test.Services
             jsonService.Setup(x => x.LoadFromFile<NetBiDiBParticipant[]>(It.IsAny<string>())).Returns(new[] { participant });
 
             // Act
-            Target = new NetBiDiBParticipantsService(ioService.Object, jsonService.Object);
+            Target = new NetBiDiBParticipantsService(ioService.Object, jsonService.Object, NullLoggerFactory.Instance);
 
             // Assert
             Target.TrustedParticipants.Should().HaveCount(1);

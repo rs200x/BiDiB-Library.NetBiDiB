@@ -8,7 +8,7 @@ using org.bidib.netbidibc.netbidib.Message;
 using org.bidib.netbidibc.netbidib.Services;
 using org.bidib.netbidibc.core.Controllers.Interfaces;
 using org.bidib.netbidibc.core.Message;
-using org.bidib.netbidibc.core.Test;
+using org.bidib.netbidibc.Testing;
 
 namespace org.bidib.netbidibc.netbidib.test.Controllers
 {

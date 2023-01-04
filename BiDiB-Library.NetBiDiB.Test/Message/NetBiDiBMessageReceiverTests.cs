@@ -10,7 +10,7 @@ using org.bidib.netbidibc.core.Models;
 using org.bidib.netbidibc.core.Models.Messages.Input;
 using org.bidib.netbidibc.core.Properties;
 using org.bidib.netbidibc.core.Services.Interfaces;
-using org.bidib.netbidibc.core.Test;
+using org.bidib.netbidibc.Testing;
 
 namespace org.bidib.netbidibc.netbidib.test.Message
 {
