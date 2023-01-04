@@ -21,11 +21,11 @@ namespace org.bidib.netbidibc.netbidib.Services
         private string storeDirectoryPath;
         private string storeFilePath;
 
-        public NetBiDiBParticipantsService(IIoService ioService, IJsonService jsonService, ILogger<NetBiDiBParticipantsService> logger)
+        public NetBiDiBParticipantsService(IIoService ioService, IJsonService jsonService, ILoggerFactory loggerFactory)
         {
             this.ioService = ioService;
             this.jsonService = jsonService;
-            this.logger = logger;
+            logger = loggerFactory.CreateLogger<NetBiDiBParticipantsService>();
             participants = new List<NetBiDiBParticipant>();
         }
 

@@ -28,9 +28,9 @@ namespace org.bidib.netbidibc.netbidib.Message
         private NetBiDiBConnectionState currentState;
         private NetBiDiBConnectionState remoteState;
 
-        public NetBiDiBMessageProcessor(ILogger<NetBiDiBMessageProcessor> logger)
+        public NetBiDiBMessageProcessor(ILoggerFactory loggerFactory)
         {
-            this.logger = logger;
+            logger = loggerFactory.CreateLogger<NetBiDiBMessageProcessor>();
         }
 
         private bool IsKnownParticipant => knownParticipants.Contains(CurrentParticipant?.Id.GetArrayValue() ?? 0);
