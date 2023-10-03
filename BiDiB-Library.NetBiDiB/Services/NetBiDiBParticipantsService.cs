@@ -1,14 +1,18 @@
-using org.bidib.netbidibc.netbidib.Models;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
+using System.Globalization;
 using System.IO;
 using System.Linq;
-using org.bidib.netbidibc.core.Services.Interfaces;
-using org.bidib.netbidibc.core.Utils;
 using Microsoft.Extensions.Logging;
+using org.bidib.Net.Core.Services.Interfaces;
+using org.bidib.Net.Core.Utils;
+using org.bidib.Net.NetBiDiB.Models;
 
-namespace org.bidib.netbidibc.netbidib.Services
+namespace org.bidib.Net.NetBiDiB.Services
 {
+    [Export(typeof(INetBiDiBParticipantsService))]
+    [PartCreationPolicy(CreationPolicy.Shared)]
     public class NetBiDiBParticipantsService : INetBiDiBParticipantsService
     {
         private readonly IIoService ioService;
@@ -17,10 +21,11 @@ namespace org.bidib.netbidibc.netbidib.Services
         private readonly List<NetBiDiBParticipant> participants;
 
         private readonly string defaultStoreDirectoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".bidib", "data", "netBiDiB");
-        private const string StoreFileName = "netBiDiBPairingStore.bidib";
+        private const string DefaultStoreFileName = "netBiDiBPairingStore-{0}.bidib";
         private string storeDirectoryPath;
         private string storeFilePath;
 
+        [ImportingConstructor]
         public NetBiDiBParticipantsService(IIoService ioService, IJsonService jsonService, ILoggerFactory loggerFactory)
         {
             this.ioService = ioService;
@@ -35,8 +40,9 @@ namespace org.bidib.netbidibc.netbidib.Services
         {
             if (config == null) { throw new ArgumentNullException(nameof(config)); }
 
-            storeDirectoryPath = !string.IsNullOrEmpty(config.PairingStoreDirectory) ? config.PairingStoreDirectory : defaultStoreDirectoryPath;
-            storeFilePath = Path.Combine(storeDirectoryPath, StoreFileName);
+            storeDirectoryPath = !string.IsNullOrEmpty(config.NetBiDiBPairingStoreDirectory) ? config.NetBiDiBPairingStoreDirectory : defaultStoreDirectoryPath;
+            var storeFileName = string.Format(CultureInfo.CurrentUICulture, DefaultStoreFileName, config.NetBiDiBClientId);
+            storeFilePath = ioService.GetPath(storeDirectoryPath, storeFileName);
 
             LoadParticipants();
         }
@@ -45,7 +51,7 @@ namespace org.bidib.netbidibc.netbidib.Services
         {
             if (participant == null) { return; }
 
-            var existing = participants.FirstOrDefault(x => x.Id.GetArrayValue() == participant.Id.GetArrayValue());
+            var existing = participants.Find(x => x.Id.GetArrayValue() == participant.Id.GetArrayValue());
 
             if (existing != null)
             {
@@ -72,11 +78,11 @@ namespace org.bidib.netbidibc.netbidib.Services
             {
                 var items = jsonService.LoadFromFile<NetBiDiBParticipant[]>(storeFilePath);
                 participants.AddRange(items.Where(x => x != null));
-                logger.LogInformation($"{participants.Count} netBiDiB participants loaded.");
+                logger.LogInformation("{Participants} netBiDiB participants loaded.", participants.Count);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"could not load participants from {storeFilePath}");
+                logger.LogError(ex, "Could not load participants from {StoreFilePath}", storeDirectoryPath);
             }
         }
 
@@ -84,7 +90,7 @@ namespace org.bidib.netbidibc.netbidib.Services
         {
             if (!jsonService.SaveToFile(participants, storeFilePath))
             {
-                logger.LogWarning($"netBiDiB participants could not be stored to: {storeFilePath}");
+                logger.LogWarning("netBiDiB participants could not be stored to: {StoreFilePath}", storeFilePath);
             }
         }
     }

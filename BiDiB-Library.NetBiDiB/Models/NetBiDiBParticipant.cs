@@ -1,8 +1,8 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Linq;
+using Newtonsoft.Json;
 
-namespace org.bidib.netbidibc.netbidib.Models
+namespace org.bidib.Net.NetBiDiB.Models
 {
     [Serializable]
     public class NetBiDiBParticipant
@@ -39,6 +39,9 @@ namespace org.bidib.netbidibc.netbidib.Models
         [JsonProperty("protocolVersion")]
         public string ProtocolVersion { get; set; }
 
+        [JsonProperty("paired")]
+        public bool IsPaired { get; set; }
+
         [JsonIgnore]
         public byte[] Id
         {
@@ -58,12 +61,12 @@ namespace org.bidib.netbidibc.netbidib.Models
 
         private byte[] GetId()
         {
-            var hexIs = Uid.StartsWith("0x", StringComparison.InvariantCultureIgnoreCase) ? uid.Substring(2) : Uid;
-            byte[] hexBytes = Enumerable.Range(0, hexIs.Length)
+            var hexIs = Uid.StartsWith("0x", StringComparison.InvariantCultureIgnoreCase) ? uid[2..] : Uid;
+            var hexBytes = Enumerable.Range(0, hexIs.Length)
                 .Where(x => x % 2 == 0)
                 .Select(x => Convert.ToByte(hexIs.Substring(x, 2), 16))
                 .ToArray();
-            byte[] uniqueIdBytes = new byte[7];
+            var uniqueIdBytes = new byte[7];
             Array.Copy(hexBytes, 0, uniqueIdBytes, 0, 7);
             return uniqueIdBytes;
         }

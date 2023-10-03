@@ -1,8 +1,12 @@
-using org.bidib.netbidibc.core.Controllers.Interfaces;
+using org.bidib.Net.Core.Controllers.Interfaces;
 
-namespace org.bidib.netbidibc.netbidib.Models;
+namespace org.bidib.Net.NetBiDiB.Models;
 
 public interface INetBiDiBConfig : INetConfig
 {
-    string PairingStoreDirectory { get; set; }
+    string NetBiDiBClientId { get; set; }
+
+    byte NetBiDiBPairingTimeout { get; set; }
+
+    string NetBiDiBPairingStoreDirectory { get; set; }
 }

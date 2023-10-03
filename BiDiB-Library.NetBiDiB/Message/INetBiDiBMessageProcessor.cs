@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using org.bidib.netbidibc.netbidib.Models;
-using org.bidib.netbidibc.core.Enumerations;
-using org.bidib.netbidibc.core.Models.Messages.Input;
-using org.bidib.netbidibc.core.Models.Messages.Output;
+using org.bidib.Net.Core.Enumerations;
+using org.bidib.Net.Core.Models.Messages.Input;
+using org.bidib.Net.Core.Models.Messages.Output;
+using org.bidib.Net.NetBiDiB.Models;
 
-namespace org.bidib.netbidibc.netbidib.Message
+namespace org.bidib.Net.NetBiDiB.Message
 {
     /// <summary>
     /// Instance processing netBiDiB messages

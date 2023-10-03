@@ -1,25 +1,22 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using org.bidib.netbidibc.netbidib.Controllers;
-using org.bidib.netbidibc.netbidib.Message;
-using org.bidib.netbidibc.netbidib.Services;
-using org.bidib.netbidibc.core.Controllers.Interfaces;
-using org.bidib.netbidibc.core.Message;
+using org.bidib.Net.Core.Controllers.Interfaces;
+using org.bidib.Net.Core.Message;
+using org.bidib.Net.NetBiDiB.Controllers;
+using org.bidib.Net.NetBiDiB.Message;
+using org.bidib.Net.NetBiDiB.Services;
 
-namespace org.bidib.netbidibc.core
+namespace org.bidib.Net.NetBiDiB;
+
+public static class DependencyExtensions
 {
-    public static class DependencyExtensions
+    public static void AddNetBiDiB(this IServiceCollection services)
     {
-        public static void AddNetBiDiB(this IServiceCollection services)
-        {
-            services.AddSingleton<INetBiDiBParticipantsService, NetBiDiBParticipantsService>();
+        services.AddSingleton<INetBiDiBParticipantsService, NetBiDiBParticipantsService>();
 
-            services.AddSingleton<IConnectionControllerFactory, ConnectionControllerFactory>();
-            //services.AddSingleton<IConnectionControllerFactory, ServerControllerFactory>();
+        services.AddSingleton<IConnectionControllerFactory, ConnectionControllerFactory>();
 
-            services.AddTransient<INetBiDiBMessageProcessor, NetBiDiBMessageProcessor>();
-            services.AddSingleton<IMessageReceiver, NetBiDiBMessageReceiver>();
-            services.AddSingleton<IBiDiBMessageService, BiDiBMessageService>();
-            services.AddSingleton<INetBiDiBServerController, NetBiDiBServerController>();
-        }
+        services.AddTransient<INetBiDiBMessageProcessor, NetBiDiBMessageProcessor>();
+        services.AddSingleton<IMessageReceiver, NetBiDiBMessageReceiver>();
+        services.AddSingleton<IBiDiBMessageService, BiDiBMessageService>();
     }
 }

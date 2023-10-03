@@ -1,25 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.Globalization;
 using System.Linq;
-using org.bidib.netbidibc.netbidib.Models;
-using org.bidib.netbidibc.core.Enumerations;
-using org.bidib.netbidibc.core.Models.Messages.Input;
-using org.bidib.netbidibc.core.Models.Messages.Output;
-using org.bidib.netbidibc.core.Utils;
-using LocalLinkOutMessage = org.bidib.netbidibc.core.Models.Messages.Output.LocalLinkMessage;
-using LocalLinkInMessage = org.bidib.netbidibc.core.Models.Messages.Input.LocalLinkMessage;
-using LocalLogonInMessage = org.bidib.netbidibc.core.Models.Messages.Input.LocalLogonMessage;
-using LocalLogonOutMessage = org.bidib.netbidibc.core.Models.Messages.Output.LocalLogonMessage;
-using LocalLogonAckInMessage = org.bidib.netbidibc.core.Models.Messages.Input.LocalLogonAckMessage;
-using LocalLogonAckOutMessage = org.bidib.netbidibc.core.Models.Messages.Output.LocalLogonAckMessage;
-using ProtocolSignatureOutMessage = org.bidib.netbidibc.core.Models.Messages.Output.ProtocolSignatureMessage;
-using ProtocolSignatureInMessage = org.bidib.netbidibc.core.Models.Messages.Input.ProtocolSignatureMessage;
-
 using Microsoft.Extensions.Logging;
+using org.bidib.Net.Core.Enumerations;
+using org.bidib.Net.Core.Models.Messages.Input;
+using org.bidib.Net.Core.Models.Messages.Output;
+using org.bidib.Net.Core.Utils;
+using org.bidib.Net.NetBiDiB.Models;
+using LocalLinkOutMessage = org.bidib.Net.Core.Models.Messages.Output.LocalLinkMessage;
+using LocalLinkInMessage = org.bidib.Net.Core.Models.Messages.Input.LocalLinkMessage;
+using LocalLogonInMessage = org.bidib.Net.Core.Models.Messages.Input.LocalLogonMessage;
+using LocalLogonOutMessage = org.bidib.Net.Core.Models.Messages.Output.LocalLogonMessage;
+using LocalLogonAckInMessage = org.bidib.Net.Core.Models.Messages.Input.LocalLogonAckMessage;
+using LocalLogonAckOutMessage = org.bidib.Net.Core.Models.Messages.Output.LocalLogonAckMessage;
+using ProtocolSignatureOutMessage = org.bidib.Net.Core.Models.Messages.Output.ProtocolSignatureMessage;
+using ProtocolSignatureInMessage = org.bidib.Net.Core.Models.Messages.Input.ProtocolSignatureMessage;
 
-namespace org.bidib.netbidibc.netbidib.Message
+namespace org.bidib.Net.NetBiDiB.Message
 {
+    [Export(typeof(INetBiDiBMessageProcessor))]
+    [PartCreationPolicy(CreationPolicy.Shared)]
     public class NetBiDiBMessageProcessor : INetBiDiBMessageProcessor
     {
         private readonly ILogger<NetBiDiBMessageProcessor> logger;
@@ -28,6 +30,7 @@ namespace org.bidib.netbidibc.netbidib.Message
         private NetBiDiBConnectionState currentState;
         private NetBiDiBConnectionState remoteState;
 
+        [ImportingConstructor]
         public NetBiDiBMessageProcessor(ILoggerFactory loggerFactory)
         {
             logger = loggerFactory.CreateLogger<NetBiDiBMessageProcessor>();
@@ -82,7 +85,7 @@ namespace org.bidib.netbidibc.netbidib.Message
         public void ProcessMessage(BiDiBInputMessage message)
         {
             if (message == null) { return; }
-            logger.LogInformation("got input {Message}", message);
+            logger.LogDebug("{Message} {DataString}", message, message.Message.GetDataString());
             switch (message)
             {
                 case ProtocolSignatureInMessage protocolSignature:
@@ -115,7 +118,7 @@ namespace org.bidib.netbidibc.netbidib.Message
 
                 default:
                     {
-                        logger.LogWarning($"received unknown message type '{message.MessageType}' at this point");
+                        logger.LogWarning("Received unknown message type '{MessageType}' at this point", message.MessageType);
                         break;
                     }
             }
@@ -250,7 +253,7 @@ namespace org.bidib.netbidibc.netbidib.Message
                     }
                 default:
                     {
-                        logger.LogWarning($"received unknown local link type '{linkMessage.LinkType}' at this point");
+                        logger.LogWarning("Received unknown local link type '{LinkType}' at this point", linkMessage.LinkType);
                         break;
                     }
             }
@@ -295,7 +298,7 @@ namespace org.bidib.netbidibc.netbidib.Message
 
         private void SendPairingStatus(LocalLinkType status)
         {
-            List<byte> parameters = new List<byte>(UniqueId);
+            var parameters = new List<byte>(UniqueId);
             parameters.AddRange(CurrentParticipant.Id);
 
             if (status == LocalLinkType.PAIRING_REQUEST)

@@ -1,8 +1,9 @@
-using org.bidib.netbidibc.core.Controllers.Interfaces;
+using org.bidib.Net.Core.Controllers.Interfaces;
+using org.bidib.Net.NetBiDiB.Models;
 
-namespace org.bidib.netbidibc.netbidib.Controllers
+namespace org.bidib.Net.NetBiDiB.Controllers
 {
-    public interface INetBiDiBController : IConnectionController<INetConfig>
+    public interface INetBiDiBController : ISocketController<INetBiDiBConfig>
     {
 
     }

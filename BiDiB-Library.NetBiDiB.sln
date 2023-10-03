@@ -7,11 +7,19 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BiDiB-Library.NetBiDiB", "B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BiDiB-Library.NetBiDiB.Test", "BiDiB-Library.NetBiDiB.Test\BiDiB-Library.NetBiDiB.Test.csproj", "{51B3A6B3-3019-4986-97FE-644F9D4CF9E0}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projektmappenelemente", "Projektmappenelemente", "{CC03DF5A-8683-4760-94F0-740A0C76D000}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CC03DF5A-8683-4760-94F0-740A0C76D000}"
 	ProjectSection(SolutionItems) = preProject
 		CodeCoverage.runsettings = CodeCoverage.runsettings
+		Build\integration-pipeline.yml = Build\integration-pipeline.yml
+		Build\master-pipeline.yml = Build\master-pipeline.yml
+		Build\merge-pipeline.yml = Build\merge-pipeline.yml
 		nuget.config = nuget.config
+		Build\variables.yml = Build\variables.yml
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BiDiB-Library.Core", "..\Core\BiDiB-Library.Core\BiDiB-Library.Core.csproj", "{ABE0D55F-7D04-44A4-9A4D-D1A4D9CD351F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BiDiB-Library.Testing", "..\Testing\BiDiB-Library.Testing\BiDiB-Library.Testing.csproj", "{B0ED8AF4-6A09-4B85-B590-702771B0DA52}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +35,12 @@ Global
 		{51B3A6B3-3019-4986-97FE-644F9D4CF9E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{51B3A6B3-3019-4986-97FE-644F9D4CF9E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{51B3A6B3-3019-4986-97FE-644F9D4CF9E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABE0D55F-7D04-44A4-9A4D-D1A4D9CD351F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABE0D55F-7D04-44A4-9A4D-D1A4D9CD351F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABE0D55F-7D04-44A4-9A4D-D1A4D9CD351F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0ED8AF4-6A09-4B85-B590-702771B0DA52}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0ED8AF4-6A09-4B85-B590-702771B0DA52}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0ED8AF4-6A09-4B85-B590-702771B0DA52}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

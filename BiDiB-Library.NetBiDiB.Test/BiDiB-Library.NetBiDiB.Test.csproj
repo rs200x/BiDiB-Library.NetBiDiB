@@ -1,23 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>org.bidib.netbidibc.netbidib.test</AssemblyName>
-    <RootNamespace>org.bidib.netbidibc.netbidib.test</RootNamespace>
+    <AssemblyName>org.bidib.Net.NetBiDiB.Test</AssemblyName>
+    <RootNamespace>org.bidib.Net.NetBiDiB.Test</RootNamespace>
       <TargetFramework>net6.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <PackageId>org.bidib.net.netbidib.test</PackageId>
+    <Authors>Robert Kölz</Authors>
+    <Copyright>bidib.org</Copyright>
+    <Company>org.bidib.net.netbidib.test</Company>
+    <Product>org.bidib.net.netbidib.test</Product>
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="FluentAssertions" Version="6.8.0" />
+    <PackageReference Include="FluentAssertions" Version="6.12.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.2" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.3" />
     <PackageReference Include="Moq" Version="4.18.4" />
-    <PackageReference Include="MSTest.TestAdapter" Version="3.0.1" />
-    <PackageReference Include="MSTest.TestFramework" Version="3.0.1" />
-    <PackageReference Include="coverlet.collector" Version="3.2.0">
+    <PackageReference Include="MSTest.TestAdapter" Version="3.1.1" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.1.1" />
+    <PackageReference Include="coverlet.collector" Version="6.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -39,7 +44,7 @@
 		</When>
 		<When Condition="'$(Configuration)'=='Release' ">
 			<ItemGroup>
-				<PackageReference Include="org.bidib.netbidibc.Testing" Version="1.0.3" />
+				<PackageReference Include="org.bidib.Net.Testing" Version="1.0.7" />
 			</ItemGroup>
 		</When>
 	</Choose>

@@ -1,6 +1,7 @@
 variables:
-  solution: "BiDiB-Library.Core.sln"
+  solution: "BiDiB-Library.NetBiDiB.sln"
   buildPlatform: "Any CPU"
   buildConfiguration: "Release"
-  version: "0.0"
-  version.build: "$(version).$(Build.BuildId)"
+  version: "1.0.0"
+  revision: $[counter(variables['version'], 0)]
+  packageVersion: '$(version)-dev.$(revision)'

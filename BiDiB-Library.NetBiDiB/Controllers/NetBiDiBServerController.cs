@@ -1,19 +1,20 @@
 ﻿using Microsoft.Extensions.Logging;
 using org.bidib.netbidibc.netbidib.Message;
 using org.bidib.netbidibc.netbidib.Services;
-using org.bidib.netbidibc.core.Controllers.Interfaces;
-using org.bidib.netbidibc.core.Enumerations;
-using org.bidib.netbidibc.core.Models;
+using org.bidib.Net.Core.Controllers.Interfaces;
+using org.bidib.Net.Core.Enumerations;
+using org.bidib.Net.Core.Models;
 using System;
 using System.Linq;
 using System.Net.Sockets;
 using System.Net;
 using System.Threading.Tasks;
-using org.bidib.netbidibc.core.Controllers;
-using org.bidib.netbidibc.core.Utils;
-using org.bidib.netbidibc.core.Message;
-using org.bidib.netbidibc.core.Models.Messages.Output;
-using org.bidib.netbidibc.core.Properties;
+using org.bidib.Net.Core.Controllers;
+using org.bidib.Net.Core.Utils;
+using org.bidib.Net.Core.Message;
+using org.bidib.Net.Core.Models.Messages.Output;
+using org.bidib.netbidibc.netbidib.Models;
+using org.bidib.Net.Core;
 
 namespace org.bidib.netbidibc.netbidib.Controllers
 {
@@ -58,7 +59,7 @@ namespace org.bidib.netbidibc.netbidib.Controllers
             this.messageProcessor = messageProcessor ?? throw new ArgumentNullException(nameof(messageProcessor));
             this.participantsService = participantsService;
             logger = loggerFactory.CreateLogger<NetBiDiBController>();
-            rawLogger = loggerFactory.CreateLogger("Raw");
+            rawLogger = loggerFactory.CreateLogger(BiDiBConstants.LoggerContextRaw);
             messageProcessor.SendMessage = SendMessage;
             messageProcessor.ConnectionStateChanged += HandleMessageProcessorConnectionStateChanged;
         }
@@ -168,7 +169,7 @@ namespace org.bidib.netbidibc.netbidib.Controllers
             }
             catch (SocketException se)
             {
-                logger.LogError(se, Resources.Error_SocketData);
+                logger.LogError(se, "Error when handling received data");
             }
         }
 
@@ -180,7 +181,7 @@ namespace org.bidib.netbidibc.netbidib.Controllers
 
                 if (!(result.AsyncState is (Socket socket, byte[] clientData)))
                 {
-                    logger.LogError(Resources.Error_NoSocket);
+                    logger.LogError("Data result is not a socket!");
                     return;
                 }
 
@@ -199,12 +200,12 @@ namespace org.bidib.netbidibc.netbidib.Controllers
             }
             catch (ObjectDisposedException)
             {
-                logger.LogDebug(Resources.Error_SocketDisposed);
+                logger.LogDebug("Socket has been disposed!");
             }
 
             catch (SocketException se)
             {
-                logger.LogError(se, Resources.Error_SocketData);
+                logger.LogError(se, "Error when handling received data");
             }
         }
 

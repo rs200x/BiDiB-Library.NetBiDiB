@@ -1,6 +1,6 @@
-# Integration pipeline for BiDiB-Library.Core
+# Integration pipeline for BiDiB-Library.NetBiDiB
 
-name: BiDiB-Library.Core.Integration_$(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
+name: BiDiB-Library.NetBiDiB.Integration_$(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
 trigger:
   batch: true
@@ -23,20 +23,23 @@ steps:
 
   - task: NuGetToolInstaller@1
 
-  - task: NuGetCommand@2
+  - task: DotNetCoreCLI@2
+    enabled: true
     inputs:
-      command: "restore"
-      restoreSolution: '$(solution)'
-      feedsToUse: "config"
-      nugetConfigPath: "nuget.config"
+      command: 'restore'
+      projects: '**/*.sln'
+      feedsToUse: 'config'
+      nugetConfigPath: 'nuget.config'
+      restoreArguments: '/property:Configuration=$(BuildConfiguration)'
 
-  - task: PowerShell@2
+  - task: SonarCloudPrepare@1
     inputs:
-      targetType: "inline"
-      script: |
-        $date=$(Get-Date -Format ddMMyyy);
-        Write-Host "##vso[task.setvariable variable=BuildDate]$date"
-
+      SonarCloud: 'rs200x'
+      organization: 'rs200x-github'
+      scannerMode: 'MSBuild'
+      projectKey: 'bidib-library-netbidib'
+      projectVersion: '$(version)'
+  
   - task: VSBuild@1
     inputs:
       solution: '$(solution)'
@@ -57,6 +60,8 @@ steps:
       codeCoverageEnabled: true
       runSettingsFile: '$(System.DefaultWorkingDirectory)\CodeCoverage.runsettings'
 
+  - task: SonarCloudAnalyze@1
+
   - task: BuildQualityChecks@8
     continueOnError: true
     inputs:
@@ -67,25 +72,41 @@ steps:
       coverageFailOption: "build"
       coverageType: "blocks"
       coveragePrecision: "0"
-      forceCoverageImprovement: true
+      forceCoverageImprovement: false
       coverageUpperThreshold: "70"
-      baseDefinitionId: 21
-      baseBranchRef: "refs/heads/master"
-  
-  - task: NuGetAuthenticate@1
+      baseDefinitionId: 34
+      baseBranchRef: "refs/heads/main"
 
-  - task: NuGetCommand@2
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet pack services'
     inputs:
       command: 'pack'
-      packagesToPack: 'BiDiB-Library.Core/*.csproj'
-      versioningScheme: byPrereleaseNumber
-      majorVersion: '0'
-      minorVersion: '0'
-      patchVersion: '1-Dev$(Build.BuildId)'
+      arguments: '--configuration $(buildConfiguration)'
+      packagesToPack: 'BiDiB-Library.NetBiDiB/*.csproj'
+      nobuild: true
+      includesymbols: true
+      versioningScheme: 'byEnvVar'
+      versionEnvVar: 'packageVersion'
 
   - task: NuGetCommand@2
+    continueOnError: true
     inputs:
       command: 'push'
       packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
       nuGetFeedType: 'internal'
       publishVstsFeed: '11cfb857-a459-41bf-a18f-5b64083932ef/7c0f4f40-53aa-4b6d-89b8-e0d0c65737a3'
+      versioningScheme: 'off'
+      allowPackageConflicts: true
+
+  - task: NuGetCommand@2
+    continueOnError: true
+    inputs:
+      command: 'push'
+      packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+      nuGetFeedType: 'internal'
+      publishVstsFeed: '318ba8a7-6ebb-41b0-994d-1baee3e08af0'
+      allowPackageConflicts: true
+      
+  - task: SonarCloudPublish@1
+    inputs:
+      pollingTimeoutSec: "300"

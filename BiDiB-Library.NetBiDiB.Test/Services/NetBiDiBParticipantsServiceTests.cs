@@ -2,12 +2,12 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using org.bidib.netbidibc.netbidib.Models;
-using org.bidib.netbidibc.netbidib.Services;
-using org.bidib.netbidibc.core.Services.Interfaces;
-using org.bidib.netbidibc.Testing;
+using org.bidib.Net.Core.Services.Interfaces;
+using org.bidib.Net.NetBiDiB.Models;
+using org.bidib.Net.NetBiDiB.Services;
+using org.bidib.Net.Testing;
 
-namespace org.bidib.netbidibc.netbidib.test.Services
+namespace org.bidib.Net.NetBiDiB.Test.Services
 {
     [TestClass]
     [TestCategory(TestCategory.UnitTest)]
@@ -27,16 +27,17 @@ namespace org.bidib.netbidibc.netbidib.test.Services
         }
 
         [TestMethod]
-        public void Ctor_ShouldLoadParticipants()
+        public void Initialize_ShouldLoadParticipants()
         {
             // Arrange
             ioService.Setup(x => x.DirectoryExists(It.IsAny<string>())).Returns(true);
             ioService.Setup(x => x.FileExists(It.IsAny<string>())).Returns(true);
             var participant = new NetBiDiBParticipant();
             jsonService.Setup(x => x.LoadFromFile<NetBiDiBParticipant[]>(It.IsAny<string>())).Returns(new[] { participant });
+            var config = new Mock<INetBiDiBConfig>().SetupAllProperties();
 
             // Act
-            Target = new NetBiDiBParticipantsService(ioService.Object, jsonService.Object, NullLoggerFactory.Instance);
+            Target.Initialize(config.Object);
 
             // Assert
             Target.TrustedParticipants.Should().HaveCount(1);

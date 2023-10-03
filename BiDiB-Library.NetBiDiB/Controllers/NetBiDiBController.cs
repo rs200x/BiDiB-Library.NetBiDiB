@@ -2,27 +2,27 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using org.bidib.netbidibc.netbidib.Message;
-using org.bidib.netbidibc.netbidib.Services;
-using org.bidib.netbidibc.core.Controllers;
-using org.bidib.netbidibc.core.Controllers.Interfaces;
-using org.bidib.netbidibc.core.Enumerations;
-using org.bidib.netbidibc.core.Message;
-using org.bidib.netbidibc.core.Models;
-using org.bidib.netbidibc.core.Models.Messages;
-using org.bidib.netbidibc.core.Models.Messages.Input;
-using org.bidib.netbidibc.core.Models.Messages.Output;
-using org.bidib.netbidibc.core.Properties;
-using org.bidib.netbidibc.core.Utils;
+using org.bidib.Net.Core;
+using org.bidib.Net.Core.Controllers;
+using org.bidib.Net.Core.Enumerations;
+using org.bidib.Net.Core.Message;
+using org.bidib.Net.Core.Models;
+using org.bidib.Net.Core.Models.Messages.Output;
+using org.bidib.Net.Core.Properties;
+using org.bidib.Net.Core.Utils;
+using org.bidib.Net.NetBiDiB.Message;
+using org.bidib.Net.NetBiDiB.Models;
+using org.bidib.Net.NetBiDiB.Services;
 
-namespace org.bidib.netbidibc.netbidib.Controllers
+namespace org.bidib.Net.NetBiDiB.Controllers
 {
-    public class NetBiDiBController : SocketController, INetBiDiBController
+    public class NetBiDiBController : SocketController<INetBiDiBConfig>, INetBiDiBController
     {
         private readonly ILogger<NetBiDiBController> logger;
         private readonly ILogger serviceLogger;
         private readonly INetBiDiBMessageProcessor messageProcessor;
         private readonly INetBiDiBParticipantsService participantsService;
+        private readonly IMessageFactory messageFactory;
         private readonly byte[] instanceId = { 0, 0x20, 0x0D, 0xFB, 0x00, 10, 20 };
         private byte pairingTimeout;
         private DateTime timeoutTime;
@@ -49,12 +49,17 @@ namespace org.bidib.netbidibc.netbidib.Controllers
             }
         }
 
-        public NetBiDiBController(INetBiDiBMessageProcessor messageProcessor, INetBiDiBParticipantsService participantsService, ILoggerFactory loggerFactory):base(loggerFactory)
+        public NetBiDiBController(
+            INetBiDiBMessageProcessor messageProcessor, 
+            INetBiDiBParticipantsService participantsService, 
+            IMessageFactory messageFactory,  
+            ILoggerFactory loggerFactory):base(loggerFactory)
         {
             this.messageProcessor = messageProcessor ?? throw new ArgumentNullException(nameof(messageProcessor));
             this.participantsService = participantsService;
+            this.messageFactory = messageFactory;
             logger = loggerFactory.CreateLogger<NetBiDiBController>();
-            serviceLogger = loggerFactory.CreateLogger("MS");
+            serviceLogger = loggerFactory.CreateLogger(BiDiBConstants.LoggerContextMessage);
             messageProcessor.SendMessage = SendMessage;
             messageProcessor.ConnectionStateChanged += HandleMessageProcessorConnectionStateChanged;
         }
@@ -65,7 +70,7 @@ namespace org.bidib.netbidibc.netbidib.Controllers
 
         public override string ConnectionName => $"netBiDiB {string.Join("", instanceId.Select(x => $"{x:X2}"))} -> {base.ConnectionName}";
 
-        public override void Initialize(INetConfig config)
+        public override void Initialize(INetBiDiBConfig config)
         {
             if (config == null) { throw new ArgumentNullException(nameof(config)); }
 
@@ -81,13 +86,13 @@ namespace org.bidib.netbidibc.netbidib.Controllers
             messageProcessor.UniqueId = instanceId;
         }
 
-        private void UpdateInstanceId(INetConfig config)
+        private void UpdateInstanceId(INetBiDiBConfig config)
         {
             if (string.IsNullOrEmpty(config.NetBiDiBClientId)) { return; }
 
             try
             {
-                byte[] clientId = Enumerable.Range(0, config.NetBiDiBClientId.Length)
+                var clientId = Enumerable.Range(0, config.NetBiDiBClientId.Length)
                     .Where(x => x % 2 == 0)
                     .Select(x => Convert.ToByte(config.NetBiDiBClientId.Substring(x, 2), 16))
                     .ToArray();
@@ -96,7 +101,7 @@ namespace org.bidib.netbidibc.netbidib.Controllers
             }
             catch (Exception e) when (e is ArgumentNullException or ArgumentOutOfRangeException)
             {
-                logger.LogError(e, $"Could not parse '{config.NetBiDiBClientId}' for custom client id");
+                logger.LogError(e, "Could not parse '{ClientId}' for custom client id", config.NetBiDiBClientId);
             }
         }
 
@@ -127,7 +132,7 @@ namespace org.bidib.netbidibc.netbidib.Controllers
 
         private NetBiDiBConnectionStateInfo ProcessCurrentState(bool isTimeout)
         {
-            string error = GetError(isTimeout);
+            var error = GetError(isTimeout);
 
             if (IsProcessorConnected)
             {
@@ -166,12 +171,11 @@ namespace org.bidib.netbidibc.netbidib.Controllers
 
         private void SendMessage(BiDiBOutputMessage outputMessage)
         {
-            byte[] message = BiDiBMessageGenerator.GenerateMessage(outputMessage);
+            var message = BiDiBMessageGenerator.GenerateMessage(outputMessage);
 
-            
             SendMessage(message, message.Length);
-            logger.LogDebug(outputMessage.ToString());
-            serviceLogger.LogDebug($"{outputMessage} {message.GetDataString()}");
+            logger.LogDebug("{Message}", outputMessage);
+            serviceLogger.LogDebug("{OutputMessage} {DataString}", outputMessage, message.GetDataString());
         }
 
         public override void ProcessMessage(byte[] message, int messageSize)
@@ -179,15 +183,15 @@ namespace org.bidib.netbidibc.netbidib.Controllers
             if (message == null) { return; }
 
             var size = messageSize > message.Length ? message.Length : messageSize;
-            byte[] messageBytes = new byte[size];
+            var messageBytes = new byte[size];
             Array.Copy(message, 0, messageBytes, 0, size);
 
             if (!IsProcessorConnected)
             {
-                foreach (byte[] subMessage in messageBytes.SplitByFirst())
+                foreach (var subMessage in messageBytes.SplitByFirst())
                 {
-                    BiDiBInputMessage inputMessage = MessageFactory.CreateInputMessage(subMessage);
-                    serviceLogger.LogDebug($"{inputMessage} {subMessage.GetDataString()}");
+                    var inputMessage = messageFactory.CreateInputMessage(subMessage);
+                    serviceLogger.LogDebug("{InputMessage} {SubMessage}", inputMessage, subMessage.GetDataString());
                     messageProcessor.ProcessMessage(inputMessage);
                 }
 
@@ -224,13 +228,13 @@ namespace org.bidib.netbidibc.netbidib.Controllers
 
             if (messageProcessor.CurrentState == NetBiDiBConnectionState.RequestPairing)
             {
-                logger.LogDebug($"State changed to request pairing, extending timeout by {pairingTimeout}");
+                logger.LogDebug("State changed to request pairing, extending timeout by {PairingTimeout}", pairingTimeout);
                 TimeoutTime = DateTime.Now.AddSeconds(pairingTimeout);
             }
 
             if (messageProcessor.CurrentState == NetBiDiBConnectionState.PairingRejected)
             {
-                logger.LogDebug($"Pairing was rejected, stopping timeout");
+                logger.LogDebug("Pairing was rejected, stopping timeout");
                 TimeoutTime = DateTime.Now.AddSeconds(0);
             }
         }

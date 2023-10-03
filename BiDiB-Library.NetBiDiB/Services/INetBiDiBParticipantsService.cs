@@ -1,7 +1,7 @@
-using org.bidib.netbidibc.netbidib.Models;
 using System.Collections.Generic;
+using org.bidib.Net.NetBiDiB.Models;
 
-namespace org.bidib.netbidibc.netbidib.Services
+namespace org.bidib.Net.NetBiDiB.Services
 {
   public interface INetBiDiBParticipantsService
   {

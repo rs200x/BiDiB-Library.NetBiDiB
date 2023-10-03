@@ -1,6 +1,6 @@
-﻿using org.bidib.netbidibc.core.Enumerations;
+﻿using org.bidib.Net.Core.Enumerations;
 
-namespace org.bidib.netbidibc.netbidib.Models;
+namespace org.bidib.Net.NetBiDiB.Models;
 
 public class NetBidibConfig : INetBiDiBConfig
 {
@@ -11,6 +11,7 @@ public class NetBidibConfig : INetBiDiBConfig
     public string ApplicationName { get; set; }
     public string NetBiDiBClientId { get; set; }
     public byte NetBiDiBPairingTimeout { get; set; }
+    public string NetBiDiBPairingStoreDirectory { get; set; }
     public InterfaceConnectionType ConnectionType { get; set; } = InterfaceConnectionType.NetBiDiB;
-    public string PairingStoreDirectory { get; set; }
+    public ConnectionStrategyType ConnectionStrategyType { get; set; } = ConnectionStrategyType.Default;
 }

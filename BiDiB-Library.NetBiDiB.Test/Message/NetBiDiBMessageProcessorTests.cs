@@ -3,18 +3,18 @@ using System.Linq;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using org.bidib.netbidibc.core;
-using org.bidib.netbidibc.core.Enumerations;
-using org.bidib.netbidibc.core.Message;
-using org.bidib.netbidibc.core.Models.Messages.Output;
-using org.bidib.netbidibc.netbidib.Message;
-using org.bidib.netbidibc.Testing;
-using LocalLinkMessage = org.bidib.netbidibc.core.Models.Messages.Input.LocalLinkMessage;
-using LocalLinkOutputMessage = org.bidib.netbidibc.core.Models.Messages.Output.LocalLinkMessage;
-using ProtocolSignatureOutMessage = org.bidib.netbidibc.core.Models.Messages.Output.ProtocolSignatureMessage;
-using ProtocolSignatureInMessage = org.bidib.netbidibc.core.Models.Messages.Input.ProtocolSignatureMessage;
+using org.bidib.Net.Core;
+using org.bidib.Net.Core.Enumerations;
+using org.bidib.Net.Core.Message;
+using org.bidib.Net.Core.Models.Messages.Output;
+using org.bidib.Net.NetBiDiB.Message;
+using org.bidib.Net.Testing;
+using LocalLinkMessage = org.bidib.Net.Core.Models.Messages.Input.LocalLinkMessage;
+using LocalLinkOutputMessage = org.bidib.Net.Core.Models.Messages.Output.LocalLinkMessage;
+using ProtocolSignatureOutMessage = org.bidib.Net.Core.Models.Messages.Output.ProtocolSignatureMessage;
+using ProtocolSignatureInMessage = org.bidib.Net.Core.Models.Messages.Input.ProtocolSignatureMessage;
 
-namespace org.bidib.netbidibc.netbidib.test.Message
+namespace org.bidib.Net.NetBiDiB.Test.Message
 {
     [TestClass]
     [TestCategory(TestCategory.UnitTest)]
@@ -259,7 +259,7 @@ namespace org.bidib.netbidibc.netbidib.test.Message
             // Assert
             target.RemoteState.Should().Be(NetBiDiBConnectionState.Paired);
             target.CurrentState.Should().Be(NetBiDiBConnectionState.Paired);
-            receivedMessages.Should().HaveCount(4);
+            receivedMessages.Should().HaveCount(5);
             receivedMessages[1].LinkType.Should().Be(LocalLinkType.STATUS_PAIRED);
             receivedMessages[2].LinkType.Should().Be(LocalLinkType.PAIRING_REQUEST);
             receivedMessages[3].LinkType.Should().Be(LocalLinkType.STATUS_PAIRED);

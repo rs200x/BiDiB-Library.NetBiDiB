@@ -1,13 +1,13 @@
 ﻿using System.Globalization;
-using org.bidib.netbidibc.core;
-using org.bidib.netbidibc.core.Enumerations;
-using org.bidib.netbidibc.core.Message;
-using org.bidib.netbidibc.core.Models.Messages.Input;
-using org.bidib.netbidibc.core.Properties;
-using org.bidib.netbidibc.core.Services.Interfaces;
-using org.bidib.netbidibc.core.Utils;
+using org.bidib.Net.Core;
+using org.bidib.Net.Core.Enumerations;
+using org.bidib.Net.Core.Message;
+using org.bidib.Net.Core.Models.Messages.Input;
+using org.bidib.Net.Core.Properties;
+using org.bidib.Net.Core.Services.Interfaces;
+using org.bidib.Net.Core.Utils;
 
-namespace org.bidib.netbidibc.netbidib.Message
+namespace org.bidib.Net.NetBiDiB.Message
 {
 
     public class NetBiDiBMessageReceiver : IMessageReceiver

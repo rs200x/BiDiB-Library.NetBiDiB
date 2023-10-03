@@ -2,14 +2,15 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using org.bidib.netbidibc.netbidib.Controllers;
-using org.bidib.netbidibc.netbidib.Message;
-using org.bidib.netbidibc.netbidib.Services;
-using org.bidib.netbidibc.core.Controllers.Interfaces;
-using org.bidib.netbidibc.core.Enumerations;
-using org.bidib.netbidibc.Testing;
+using org.bidib.Net.Core.Enumerations;
+using org.bidib.Net.Core.Message;
+using org.bidib.Net.NetBiDiB.Controllers;
+using org.bidib.Net.NetBiDiB.Message;
+using org.bidib.Net.NetBiDiB.Models;
+using org.bidib.Net.NetBiDiB.Services;
+using org.bidib.Net.Testing;
 
-namespace org.bidib.netbidibc.netbidib.test.Controllers
+namespace org.bidib.Net.NetBiDiB.Test.Controllers
 {
     [TestClass]
     [TestCategory(TestCategory.UnitTest)]
@@ -22,10 +23,11 @@ namespace org.bidib.netbidibc.netbidib.test.Controllers
         {
             base.OnTestInitialize();
 
-            messageProcessor = new Mock<INetBiDiBMessageProcessor>();
+            messageProcessor = new Mock<INetBiDiBMessageProcessor>().SetupAllProperties();
             participantsService = new Mock<INetBiDiBParticipantsService>();
             var loggerFactory = new Mock<ILoggerFactory>();
-            Target = new ConnectionControllerFactory(messageProcessor.Object, participantsService.Object, loggerFactory.Object);
+            loggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(new Mock<ILogger>().Object);
+            Target = new ConnectionControllerFactory(messageProcessor.Object, participantsService.Object, Mock.Of<IMessageFactory>(), loggerFactory.Object);
         }
 
         [TestMethod]
@@ -43,7 +45,7 @@ namespace org.bidib.netbidibc.netbidib.test.Controllers
         public void GetController_ShouldCreateAndInitController()
         {
             // Arrange
-            var config = new Mock<INetConfig>();
+            var config = new Mock<INetBiDiBConfig>().SetupAllProperties();
             config.Object.ApplicationName = "APP";
             config.Object.NetworkHostAddress = "127.0.0.1";
             config.Object.NetworkPortNumber = 123;
@@ -53,7 +55,7 @@ namespace org.bidib.netbidibc.netbidib.test.Controllers
 
             // Assert
             controller.Should().NotBeNull();
-            controller.ConnectionName.Should().Be("netBiDiB 00000DFB000A14 -> 127.0.0.1:123");
+            controller.ConnectionName.Should().Be("netBiDiB 00200DFB000A14 -> 127.0.0.1:123");
             messageProcessor.Object.Emitter.Should().Be("APP");
         }
     }
