@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
-using org.bidib.netbidibc.netbidib.Message;
-using org.bidib.netbidibc.netbidib.Services;
+using org.bidib.Net.NetBiDiB.Message;
+using org.bidib.Net.NetBiDiB.Services;
 using org.bidib.Net.Core.Controllers.Interfaces;
 using org.bidib.Net.Core.Enumerations;
 using org.bidib.Net.Core.Models;
@@ -13,10 +13,10 @@ using org.bidib.Net.Core.Controllers;
 using org.bidib.Net.Core.Utils;
 using org.bidib.Net.Core.Message;
 using org.bidib.Net.Core.Models.Messages.Output;
-using org.bidib.netbidibc.netbidib.Models;
+using org.bidib.Net.NetBiDiB.Models;
 using org.bidib.Net.Core;
 
-namespace org.bidib.netbidibc.netbidib.Controllers
+namespace org.bidib.Net.NetBiDiB.Controllers
 {
     internal class NetBiDiBServerController : ConnectionController<INetConfig>, INetBiDiBServerController
     {

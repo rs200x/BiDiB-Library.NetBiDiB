@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
-using org.bidib.netbidibc.netbidib.Message;
-using org.bidib.netbidibc.netbidib.Services;
+using org.bidib.Net.NetBiDiB.Message;
+using org.bidib.Net.NetBiDiB.Services;
 using org.bidib.Net.Core.Controllers.Interfaces;
 using org.bidib.Net.Core.Enumerations;
 
-namespace org.bidib.netbidibc.netbidib.Controllers
+namespace org.bidib.Net.NetBiDiB.Controllers
 {
     internal class ServerControllerFactory : IConnectionControllerFactory
     {

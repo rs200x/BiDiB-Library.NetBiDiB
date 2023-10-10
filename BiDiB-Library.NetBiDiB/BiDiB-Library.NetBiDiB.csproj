@@ -12,6 +12,8 @@
 		<PackageIcon>bidib_logo.png</PackageIcon>
 		<Product>BiDiB-Library - NetBiDiB Extension</Product>
 		<PackageId>org.bidib.net.netbidib</PackageId>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageReadmeFile>readme.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -34,7 +36,7 @@
 		</When>
 		<When Condition="'$(Configuration)'=='Release' ">
 			<ItemGroup>
-				<PackageReference Include="org.bidib.net.core" Version="1.0.2" />
+				<PackageReference Include="org.bidib.net.core" Version="1.0.3" />
 			</ItemGroup>
 		</When>
 	</Choose>
@@ -42,6 +44,7 @@
 	<ItemGroup>
 		<Folder Include="Message\" />
 		<None Include="bidib_logo.png" Pack="true" PackagePath="\" />
+		<None Include="readme.md" Pack="true" PackagePath="\" />
 		<Compile Remove="Controllers\NetBiDiBServerController.cs" />
 		<None Include="Controllers\NetBiDiBServerController.cs" />
 		<Compile Remove="Controllers\ServerControllerFactory.cs" />
