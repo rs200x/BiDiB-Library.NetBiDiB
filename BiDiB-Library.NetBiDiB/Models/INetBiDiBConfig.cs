@@ -8,5 +8,9 @@ public interface INetBiDiBConfig : INetConfig
 
     byte NetBiDiBPairingTimeout { get; set; }
 
+    string NetBiDiBHostAddress { get; set; }
+
+    int NetBiDiBPortNumber { get; set; }
+
     string NetBiDiBPairingStoreDirectory { get; set; }
 }

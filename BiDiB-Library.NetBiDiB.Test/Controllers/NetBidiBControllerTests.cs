@@ -59,8 +59,8 @@ public class NetBiDiBControllerTests : TestClass<NetBiDiBController>
         // Arrange
         var config = new Mock<INetBiDiBConfig>();
         config.Setup(x => x.NetBiDiBClientId).Returns(string.Empty);
-        config.Setup(x => x.NetworkHostAddress).Returns("127.0.0.1");
-        config.Setup(x => x.NetworkPortNumber).Returns(62875);
+        config.Setup(x => x.NetBiDiBHostAddress).Returns("127.0.0.1");
+        config.Setup(x => x.NetBiDiBPortNumber).Returns(62875);
 
         // Act
         Target.Initialize(config.Object);
@@ -75,8 +75,8 @@ public class NetBiDiBControllerTests : TestClass<NetBiDiBController>
         // Arrange
         var config = new Mock<INetBiDiBConfig>();
         config.Setup(x => x.NetBiDiBClientId).Returns("010101");
-        config.Setup(x => x.NetworkHostAddress).Returns("localhost");
-        config.Setup(x => x.NetworkPortNumber).Returns(62875);
+        config.Setup(x => x.NetBiDiBHostAddress).Returns("localhost");
+        config.Setup(x => x.NetBiDiBPortNumber).Returns(62875);
 
         // Act
         Target.Initialize(config.Object);

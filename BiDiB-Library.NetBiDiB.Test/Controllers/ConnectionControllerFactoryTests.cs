@@ -47,8 +47,8 @@ namespace org.bidib.Net.NetBiDiB.Test.Controllers
             // Arrange
             var config = new Mock<INetBiDiBConfig>().SetupAllProperties();
             config.Object.ApplicationName = "APP";
-            config.Object.NetworkHostAddress = "127.0.0.1";
-            config.Object.NetworkPortNumber = 123;
+            config.Object.NetBiDiBHostAddress = "127.0.0.1";
+            config.Object.NetBiDiBPortNumber = 123;
 
             // Act
             var controller = Target.GetController(config.Object);
