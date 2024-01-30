@@ -242,7 +242,7 @@ namespace org.bidib.Net.NetBiDiB.Controllers
         private NetBiDiBConnectionStateInfo GetConnectionStateInfo(string error)
         {
             return new NetBiDiBConnectionStateInfo(
-                messageProcessor.GetInterfaceConnectionState(),                 
+                messageProcessor.InterfaceConnectionState,                 
                 messageProcessor.CurrentState,
                 messageProcessor.RemoteState,
                 messageProcessor.CurrentParticipant.Id, 
