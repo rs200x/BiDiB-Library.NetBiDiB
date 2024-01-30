@@ -40,7 +40,6 @@ namespace org.bidib.Net.NetBiDiB.Message
 
         public NetBiDiBParticipant CurrentParticipant { get; private set; } = new();
 
-
         public Action<BiDiBOutputMessage> SendMessage { get; set; }
 
         public NetBiDiBConnectionState CurrentState
@@ -147,33 +146,37 @@ namespace org.bidib.Net.NetBiDiB.Message
 
         public event EventHandler<EventArgs> ConnectionStateChanged;
 
-        public InterfaceConnectionState GetInterfaceConnectionState()
+        public InterfaceConnectionState InterfaceConnectionState
         {
-            switch (CurrentState)
+            get
             {
-                case NetBiDiBConnectionState.Disconnected:
-                case NetBiDiBConnectionState.SendSignature:
-                case NetBiDiBConnectionState.WaitForId:
-                case NetBiDiBConnectionState.WaitForStatus:
-                case NetBiDiBConnectionState.Paired:
-                    {
+                switch (CurrentState)
+                {
+                    case NetBiDiBConnectionState.Disconnected:
+                    case NetBiDiBConnectionState.SendSignature:
+                    case NetBiDiBConnectionState.WaitForId:
+                    case NetBiDiBConnectionState.WaitForStatus:
+                    case NetBiDiBConnectionState.Paired:
+                    case NetBiDiBConnectionState.PairingRejected:
+                        {
                         return InterfaceConnectionState.Disconnected;
                     }
-                case NetBiDiBConnectionState.RequestPairing:
-                case NetBiDiBConnectionState.Unpaired:
+                    case NetBiDiBConnectionState.RequestPairing:
+                    case NetBiDiBConnectionState.Unpaired:
                     {
                         return InterfaceConnectionState.Unpaired;
                     }
-                case NetBiDiBConnectionState.ConnectedControlling:
+                    case NetBiDiBConnectionState.ConnectedControlling:
                     {
                         return InterfaceConnectionState.FullyConnected;
                     }
-                case NetBiDiBConnectionState.ConnectedUncontrolled:
+                    case NetBiDiBConnectionState.ConnectedUncontrolled:
                     {
                         return InterfaceConnectionState.PartiallyConnected;
                     }
-                default:
-                    return InterfaceConnectionState.Disconnected;
+                    default:
+                        return InterfaceConnectionState.Disconnected;
+                }
             }
         }
 

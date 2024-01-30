@@ -81,7 +81,7 @@ namespace org.bidib.Net.NetBiDiB.Message
         /// Determines the interface connection state based on the current NetBiDiB state
         /// </summary>
         /// <returns></returns>
-        InterfaceConnectionState GetInterfaceConnectionState();
+        InterfaceConnectionState InterfaceConnectionState { get; }
 
         /// <summary>
         /// Event raised when netBiDiB connection state has changed
