@@ -13,6 +13,7 @@ trigger:
       - bug/*
       - releases/*
       - development
+      - coreDev
 
 pool:
   vmImage: "windows-2022"
