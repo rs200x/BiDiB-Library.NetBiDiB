@@ -26,7 +26,7 @@ namespace org.bidib.Net.NetBiDiB.Message;
 public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBMessageProcessor
 {
     private readonly ILogger<NetBiDiBMessageProcessor> logger = loggerFactory.CreateLogger<NetBiDiBMessageProcessor>();
-    private IEnumerable<int> knownParticipants;
+    private IEnumerable<int> knownParticipants = [];
     private byte pairingTimeout;
     private NetBiDiBConnectionState currentState;
     private NetBiDiBConnectionState remoteState;
