@@ -23,9 +23,11 @@ public class NetBidibConfig : INetBiDiBConfig
 
     public int NetBiDiBPortNumber { get; set; }
     public string ApplicationName { get; set; }
+    public string Username { get; set; }
     public string NetBiDiBClientId { get; set; }
     public byte NetBiDiBPairingTimeout { get; set; }
     public string NetBiDiBPairingStoreDirectory { get; set; }
+
     public InterfaceConnectionType ConnectionType { get; set; } = InterfaceConnectionType.NetBiDiB;
     public ConnectionStrategyType ConnectionStrategyType { get; set; } = ConnectionStrategyType.Default;
     

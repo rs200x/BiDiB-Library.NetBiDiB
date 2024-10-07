@@ -18,6 +18,11 @@ namespace org.bidib.Net.NetBiDiB.Message
         string Emitter { get; set; }
 
         /// <summary>
+        /// Gets or sets the username
+        /// </summary>
+        string Username { get; set; }
+
+        /// <summary>
         /// Gets or sets the local unique id
         /// </summary>
         byte[] UniqueId { get; set; }

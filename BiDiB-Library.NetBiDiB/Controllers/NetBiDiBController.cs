@@ -95,6 +95,7 @@ public class NetBiDiBController : SocketController<INetBiDiBConfig>, INetBiDiBCo
         UpdateInstanceId(netBidiBConfig);
 
         messageProcessor.Emitter = netBidiBConfig.ApplicationName;
+        messageProcessor.Username = !string.IsNullOrEmpty(config.Username) ? config.Username : Environment.UserDomainName;
         messageProcessor.UniqueId = instanceId;
     }
 

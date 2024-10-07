@@ -63,6 +63,8 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
 
     public string Emitter { get; set; } = string.Empty;
 
+    public string Username { get; set; } = Environment.UserDomainName;
+
     public byte[] UniqueId { get; set; } = new byte[7];
 
 
@@ -188,7 +190,7 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
             CurrentState = NetBiDiBConnectionState.WaitForId;
             SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_UID, UniqueId));
             SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_PROD_STRING, Emitter.GetBytes()));
-            SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_USER_STRING, Environment.UserDomainName.GetBytes()));
+            SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_USER_STRING, Username.GetBytes()));
             SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_P_VERSION, new byte[] { 0, 8 }));
             SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_ROLE, new byte[] { 1 }));
         }
