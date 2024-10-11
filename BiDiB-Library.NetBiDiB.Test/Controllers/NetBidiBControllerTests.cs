@@ -57,13 +57,15 @@ public class NetBiDiBControllerTests : TestClass<NetBiDiBController>
     public void Initialize_ShouldUseDefaultId_WhenNetBiDiBClientIdNotSet()
     {
         // Arrange
-        var config = new Mock<INetBiDiBConfig>();
-        config.Setup(x => x.NetBiDiBClientId).Returns(string.Empty);
-        config.Setup(x => x.NetworkHostAddress).Returns("127.0.0.1");
-        config.Setup(x => x.NetworkPortNumber).Returns(62875);
+        var config = new NetBidibConfig
+        {
+            NetBiDiBClientId = string.Empty,
+            NetBiDiBHostAddress = "127.0.0.1",
+            NetBiDiBPortNumber = 62875
+        };
 
         // Act
-        Target.Initialize(config.Object);
+        Target.Initialize(config);
 
         // Assert
         Target.ConnectionName.Should().Be("netBiDiB 00200DFB000A14 -> 127.0.0.1:62875");
@@ -73,16 +75,59 @@ public class NetBiDiBControllerTests : TestClass<NetBiDiBController>
     public void Initialize_ShouldUseNetBiDiBClientIdForInstanceId()
     {
         // Arrange
-        var config = new Mock<INetBiDiBConfig>();
-        config.Setup(x => x.NetBiDiBClientId).Returns("010101");
-        config.Setup(x => x.NetworkHostAddress).Returns("localhost");
-        config.Setup(x => x.NetworkPortNumber).Returns(62875);
+        var config = new NetBidibConfig
+        {
+            NetBiDiBClientId = "010101",
+            NetBiDiBHostAddress = "localhost",
+            NetBiDiBPortNumber = 62875
+        };
 
         // Act
-        Target.Initialize(config.Object);
+        Target.Initialize(config);
 
         // Assert
         Target.ConnectionName.Should().Be("netBiDiB 00200DFB010101 -> localhost:62875");
+    }
+    
+    [TestMethod]
+    public void Initialize_ShouldSetProcessorProperties()
+    {
+        // Arrange
+        var config = new NetBidibConfig
+        {
+            NetBiDiBClientId = "010101",
+            NetBiDiBHostAddress = "localhost",
+            NetBiDiBPortNumber = 62875,
+            ApplicationName = "APP",
+            Username = "User"
+        };
+
+        // Act
+        Target.Initialize(config);
+
+        // Assert
+        messageProcessor.VerifySet(x=>x.Emitter = config.ApplicationName);
+        messageProcessor.VerifySet(x=>x.Username = config.Username);
+        messageProcessor.VerifySet(x=>x.UniqueId = [0, 0x20, 0x0D, 0xFB, 1, 1, 1]);
+    }
+    
+    [TestMethod]
+    public void Initialize_ShouldSetDefaultProcessorProperties_WhenNotDefined()
+    {
+        // Arrange
+        var config = new NetBidibConfig
+        {
+            NetBiDiBHostAddress = "localhost",
+            NetBiDiBPortNumber = 62875,
+        };
+
+        // Act
+        Target.Initialize(config);
+
+        // Assert
+        messageProcessor.VerifySet(x=>x.Emitter = "BiDiB");
+        messageProcessor.VerifySet(x=>x.Username = Environment.UserDomainName);
+        messageProcessor.VerifySet(x=>x.UniqueId = [0, 0x20, 0x0D, 0xFB, 0x00, 10, 20]);
     }
 
     [TestMethod]

@@ -94,7 +94,7 @@ public class NetBiDiBController : SocketController<INetBiDiBConfig>, INetBiDiBCo
         pairingTimeout = netBidiBConfig.NetBiDiBPairingTimeout;
         UpdateInstanceId(netBidiBConfig);
 
-        messageProcessor.Emitter = netBidiBConfig.ApplicationName;
+        messageProcessor.Emitter =  !string.IsNullOrEmpty(netBidiBConfig.ApplicationName) ? netBidiBConfig.ApplicationName : "BiDiB";
         messageProcessor.Username = !string.IsNullOrEmpty(config.Username) ? config.Username : Environment.UserDomainName;
         messageProcessor.UniqueId = instanceId;
     }
