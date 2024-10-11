@@ -31,6 +31,21 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
     private NetBiDiBConnectionState currentState;
     private NetBiDiBConnectionState remoteState;
 
+    private IDictionary<NetBiDiBConnectionState, InterfaceConnectionState> stateMapping =
+        new Dictionary<NetBiDiBConnectionState, InterfaceConnectionState>
+        {
+            { NetBiDiBConnectionState.Disconnected, InterfaceConnectionState.Unpaired },
+            { NetBiDiBConnectionState.SendSignature, InterfaceConnectionState.Unpaired },
+            { NetBiDiBConnectionState.WaitForId, InterfaceConnectionState.Unpaired },
+            { NetBiDiBConnectionState.WaitForStatus, InterfaceConnectionState.Unpaired },
+            { NetBiDiBConnectionState.Paired, InterfaceConnectionState.Unpaired },
+            { NetBiDiBConnectionState.PairingRejected, InterfaceConnectionState.Unpaired },
+            { NetBiDiBConnectionState.RequestPairing, InterfaceConnectionState.Unpaired },
+            { NetBiDiBConnectionState.Unpaired, InterfaceConnectionState.Unpaired },
+            { NetBiDiBConnectionState.ConnectedControlling, InterfaceConnectionState.FullyConnected },
+            { NetBiDiBConnectionState.ConnectedUncontrolled, InterfaceConnectionState.PartiallyConnected }
+        };
+
     private bool IsKnownParticipant => knownParticipants.Contains(CurrentParticipant?.Id.GetArrayValue() ?? 0);
 
     public NetBiDiBParticipant CurrentParticipant { get; private set; } = new();
@@ -42,7 +57,10 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
         get => currentState;
         private set
         {
-            if (currentState == value) { return; }
+            if (currentState == value)
+            {
+                return;
+            }
 
             currentState = value;
             OnConnectionStateChanged();
@@ -54,7 +72,10 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
         get => remoteState;
         private set
         {
-            if (remoteState == value) { return; }
+            if (remoteState == value)
+            {
+                return;
+            }
 
             remoteState = value;
             OnConnectionStateChanged();
@@ -80,7 +101,11 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
 
     public void ProcessMessage(BiDiBInputMessage message)
     {
-        if (message == null) { return; }
+        if (message == null)
+        {
+            return;
+        }
+
         logger.LogDebug("{Message} {DataString}", message, message.Message.GetDataString());
         switch (message)
         {
@@ -143,39 +168,10 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
 
     public event EventHandler<EventArgs> ConnectionStateChanged;
 
-    public InterfaceConnectionState InterfaceConnectionState
-    {
-        get
-        {
-            switch (CurrentState)
-            {
-                case NetBiDiBConnectionState.Disconnected:
-                case NetBiDiBConnectionState.SendSignature:
-                case NetBiDiBConnectionState.WaitForId:
-                case NetBiDiBConnectionState.WaitForStatus:
-                case NetBiDiBConnectionState.Paired:
-                case NetBiDiBConnectionState.PairingRejected:
-                {
-                    return InterfaceConnectionState.Disconnected;
-                }
-                case NetBiDiBConnectionState.RequestPairing:
-                case NetBiDiBConnectionState.Unpaired:
-                {
-                    return InterfaceConnectionState.Unpaired;
-                }
-                case NetBiDiBConnectionState.ConnectedControlling:
-                {
-                    return InterfaceConnectionState.FullyConnected;
-                }
-                case NetBiDiBConnectionState.ConnectedUncontrolled:
-                {
-                    return InterfaceConnectionState.PartiallyConnected;
-                }
-                default:
-                    return InterfaceConnectionState.Disconnected;
-            }
-        }
-    }
+    public InterfaceConnectionState InterfaceConnectionState =>
+        stateMapping.TryGetValue(CurrentState, out var interfaceState)
+            ? interfaceState
+            : InterfaceConnectionState.Disconnected;
 
     private void OnConnectionStateChanged()
     {
@@ -228,7 +224,8 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
             }
             case LocalLinkType.DESCRIPTOR_P_VERSION:
             {
-                CurrentParticipant.ProtocolVersion = $"{string.Join(".", linkMessage.Data.Reverse().Select(x => x.ToString(CultureInfo.CurrentCulture)))}";
+                CurrentParticipant.ProtocolVersion =
+                    $"{string.Join(".", linkMessage.Data.Reverse().Select(x => x.ToString(CultureInfo.CurrentCulture)))}";
                 break;
             }
             case LocalLinkType.DESCRIPTOR_USER_STRING:
@@ -267,7 +264,8 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
             CurrentState = NetBiDiBConnectionState.Paired;
         }
 
-        if (RemoteState != NetBiDiBConnectionState.Disconnected && CurrentState == NetBiDiBConnectionState.RequestPairing)
+        if (RemoteState != NetBiDiBConnectionState.Disconnected &&
+            CurrentState == NetBiDiBConnectionState.RequestPairing)
         {
             SendPairingStatus(LocalLinkType.STATUS_PAIRED);
         }
@@ -282,7 +280,9 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
 
     private void HandleRemoteUnpaired()
     {
-        if (RemoteState != NetBiDiBConnectionState.Disconnected && CurrentState == NetBiDiBConnectionState.RequestPairing || RemoteState == NetBiDiBConnectionState.RequestPairing)
+        if (RemoteState != NetBiDiBConnectionState.Disconnected &&
+            CurrentState == NetBiDiBConnectionState.RequestPairing ||
+            RemoteState == NetBiDiBConnectionState.RequestPairing)
         {
             CurrentState = NetBiDiBConnectionState.PairingRejected;
         }
@@ -294,7 +294,6 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
         }
 
         RemoteState = NetBiDiBConnectionState.Unpaired;
-
     }
 
     private void SendPairingStatus(LocalLinkType status)

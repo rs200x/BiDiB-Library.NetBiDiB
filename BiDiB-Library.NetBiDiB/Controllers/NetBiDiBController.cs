@@ -53,11 +53,17 @@ public class NetBiDiBController : SocketController<INetBiDiBConfig>, INetBiDiBCo
         INetBiDiBMessageProcessor messageProcessor, 
         INetBiDiBParticipantsService participantsService, 
         IMessageFactory messageFactory,  
-        ILoggerFactory loggerFactory):base(loggerFactory)
+        ILoggerFactory loggerFactory) : base(loggerFactory)
     {
         this.messageProcessor = messageProcessor ?? throw new ArgumentNullException(nameof(messageProcessor));
+        
         this.participantsService = participantsService;
         this.messageFactory = messageFactory;
+        
+        if (loggerFactory == null)
+        {
+            throw new ArgumentNullException(nameof(loggerFactory));
+        }
         logger = loggerFactory.CreateLogger<NetBiDiBController>();
         serviceLogger = loggerFactory.CreateLogger(BiDiBConstants.LoggerContextMessage);
         messageProcessor.SendMessage = SendMessage;
