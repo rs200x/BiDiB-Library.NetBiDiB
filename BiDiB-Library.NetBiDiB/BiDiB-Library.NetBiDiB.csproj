@@ -36,7 +36,7 @@
 		</When>
 		<When Condition="'$(Configuration)'=='Release' ">
 			<ItemGroup>
-				<PackageReference Include="org.bidib.net.core" Version="1.0.6-dev.7" />
+				<PackageReference Include="org.bidib.net.core" Version="1.0.6-dev.15" />
 			</ItemGroup>
 		</When>
 	</Choose>
