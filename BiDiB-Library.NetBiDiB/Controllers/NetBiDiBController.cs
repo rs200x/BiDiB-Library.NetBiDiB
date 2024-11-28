@@ -80,7 +80,7 @@ public class NetBiDiBController : SocketController<INetBiDiBConfig>, INetBiDiBCo
     {
         if (config == null) { throw new ArgumentNullException(nameof(config)); }
 
-        var netBidiBConfig = new NetBidibConfig
+        var netBiDiBConfig = new NetBidibConfig
         {
             ApplicationName = config.ApplicationName,
             ConnectionType = config.ConnectionType,
@@ -89,20 +89,22 @@ public class NetBiDiBController : SocketController<INetBiDiBConfig>, INetBiDiBCo
             NetBiDiBPairingTimeout = config.NetBiDiBPairingTimeout,
             NetBiDiBHostAddress = config.NetBiDiBHostAddress,
             NetBiDiBPortNumber = config.NetBiDiBPortNumber,
-            NetBiDiBPairingStoreDirectory = config.NetBiDiBPairingStoreDirectory
+            NetBiDiBPairingStoreDirectory = config.NetBiDiBPairingStoreDirectory,
+            ClientRole = config.ClientRole,
         };
             
         if (!IsConnected)
         {
-            base.Initialize(netBidiBConfig);
+            base.Initialize(netBiDiBConfig);
         }
 
-        pairingTimeout = netBidiBConfig.NetBiDiBPairingTimeout;
-        UpdateInstanceId(netBidiBConfig);
+        pairingTimeout = netBiDiBConfig.NetBiDiBPairingTimeout;
+        UpdateInstanceId(netBiDiBConfig);
 
-        messageProcessor.Emitter =  !string.IsNullOrEmpty(netBidiBConfig.ApplicationName) ? netBidiBConfig.ApplicationName : "BiDiB";
+        messageProcessor.Emitter =  !string.IsNullOrEmpty(netBiDiBConfig.ApplicationName) ? netBiDiBConfig.ApplicationName : "BiDiB";
         messageProcessor.Username = !string.IsNullOrEmpty(config.Username) ? config.Username : Environment.UserDomainName;
         messageProcessor.UniqueId = instanceId;
+        messageProcessor.ClientRole = config.ClientRole;
     }
 
     private void UpdateInstanceId(INetBiDiBConfig config)

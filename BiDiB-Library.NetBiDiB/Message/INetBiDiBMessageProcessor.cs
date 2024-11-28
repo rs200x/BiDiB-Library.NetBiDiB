@@ -32,6 +32,10 @@ namespace org.bidib.Net.NetBiDiB.Message
         /// </summary>
         byte[] Address { get; }
 
+        /// <summary>
+        /// Gets or sets the acting client role against the other member
+        /// </summary>
+        NetBiDiBClientRole ClientRole { get; set; }
 
         /// <summary>
         /// Gets the current participant

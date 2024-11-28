@@ -15,4 +15,6 @@ public interface INetBiDiBConfig : INetConfig
     string NetBiDiBPairingStoreDirectory { get; set; }
 
     string Username { get; set; }
+
+    NetBiDiBClientRole ClientRole { get; set; }
 }

@@ -30,6 +30,5 @@ public class NetBidibConfig : INetBiDiBConfig
 
     public InterfaceConnectionType ConnectionType { get; set; } = InterfaceConnectionType.NetBiDiB;
     public ConnectionStrategyType ConnectionStrategyType { get; set; } = ConnectionStrategyType.Default;
-    
-   
+    public NetBiDiBClientRole ClientRole { get; set; } = NetBiDiBClientRole.Interface;
 }

@@ -31,7 +31,7 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
     private NetBiDiBConnectionState currentState;
     private NetBiDiBConnectionState remoteState;
 
-    private IDictionary<NetBiDiBConnectionState, InterfaceConnectionState> stateMapping =
+    private readonly IDictionary<NetBiDiBConnectionState, InterfaceConnectionState> stateMapping =
         new Dictionary<NetBiDiBConnectionState, InterfaceConnectionState>
         {
             { NetBiDiBConnectionState.Disconnected, InterfaceConnectionState.Unpaired },
@@ -88,8 +88,9 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
 
     public byte[] UniqueId { get; set; } = new byte[7];
 
-
     public byte[] Address { get; private set; }
+
+    public NetBiDiBClientRole ClientRole { get; set; } = NetBiDiBClientRole.Interface;
 
     public void Start(IEnumerable<byte[]> trustedParticipants, byte timeout)
     {
@@ -160,7 +161,7 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
     public void Reset()
     {
         CurrentParticipant = new NetBiDiBParticipant();
-        knownParticipants = Enumerable.Empty<int>();
+        knownParticipants = [];
         CurrentState = NetBiDiBConnectionState.Disconnected;
         RemoteState = NetBiDiBConnectionState.Disconnected;
         Address = null;
@@ -187,8 +188,8 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
             SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_UID, UniqueId));
             SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_PROD_STRING, Emitter.GetBytes()));
             SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_USER_STRING, Username.GetBytes()));
-            SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_P_VERSION, new byte[] { 0, 8 }));
-            SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_ROLE, new byte[] { 1 }));
+            SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_P_VERSION, [0, 8]));
+            SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_ROLE, [(byte) ClientRole]));
         }
         else
         {
