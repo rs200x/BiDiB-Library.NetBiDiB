@@ -26,6 +26,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="org.bidib.net.core" Version="1.0.6-dev.23" />
   </ItemGroup>
 
   <ItemGroup>
