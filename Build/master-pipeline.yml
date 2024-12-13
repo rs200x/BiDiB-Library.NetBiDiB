@@ -33,7 +33,7 @@ steps:
     inputs:
       SonarCloud: 'rs200x'
       organization: 'rs200x-github'
-      scannerMode: 'MSBuild'
+      scannerMode: 'dotnet'
       projectKey: 'bidib-library-netbidib'
       projectVersion: '$(version)'
   
