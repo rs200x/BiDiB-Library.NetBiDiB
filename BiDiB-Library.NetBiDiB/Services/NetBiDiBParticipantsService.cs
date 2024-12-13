@@ -13,26 +13,23 @@ namespace org.bidib.Net.NetBiDiB.Services
 {
     [Export(typeof(INetBiDiBParticipantsService))]
     [PartCreationPolicy(CreationPolicy.Shared)]
-    public class NetBiDiBParticipantsService : INetBiDiBParticipantsService
+    [method: ImportingConstructor]
+    public class NetBiDiBParticipantsService(
+        IIoService ioService,
+        IJsonService jsonService,
+        ILogger<NetBiDiBParticipantsService> logger)
+        : INetBiDiBParticipantsService
     {
-        private readonly IIoService ioService;
-        private readonly IJsonService jsonService;
-        private readonly ILogger<NetBiDiBParticipantsService> logger;
-        private readonly List<NetBiDiBParticipant> participants;
+
+        private readonly IIoService ioService = ioService ?? throw new ArgumentNullException(nameof(ioService));
+        private readonly IJsonService jsonService = jsonService ?? throw new ArgumentNullException(nameof(jsonService));
+
+        private readonly List<NetBiDiBParticipant> participants = [];
 
         private readonly string defaultStoreDirectoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".bidib", "data", "netBiDiB");
         private const string DefaultStoreFileName = "netBiDiBPairingStore-{0}.bidib";
         private string storeDirectoryPath;
         private string storeFilePath;
-
-        [ImportingConstructor]
-        public NetBiDiBParticipantsService(IIoService ioService, IJsonService jsonService, ILoggerFactory loggerFactory)
-        {
-            this.ioService = ioService;
-            this.jsonService = jsonService;
-            logger = loggerFactory.CreateLogger<NetBiDiBParticipantsService>();
-            participants = new List<NetBiDiBParticipant>();
-        }
 
         public IEnumerable<NetBiDiBParticipant> TrustedParticipants => participants;
 
@@ -74,15 +71,17 @@ namespace org.bidib.Net.NetBiDiB.Services
 
             if (!ioService.FileExists(storeFilePath)) { return; }
 
-            try
+
+            var items = jsonService.LoadFromFile<NetBiDiBParticipant[]>(storeFilePath);
+
+            if (items != null)
             {
-                var items = jsonService.LoadFromFile<NetBiDiBParticipant[]>(storeFilePath);
                 participants.AddRange(items.Where(x => x != null));
                 logger.LogInformation("{Participants} netBiDiB participants loaded.", participants.Count);
             }
-            catch (Exception ex)
+            else
             {
-                logger.LogError(ex, "Could not load participants from {StoreFilePath}", storeDirectoryPath);
+                logger.LogWarning("Could not load participants from {StoreFilePath}", storeDirectoryPath);
             }
         }
 
