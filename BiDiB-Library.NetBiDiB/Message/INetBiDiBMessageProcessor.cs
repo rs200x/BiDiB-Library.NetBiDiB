@@ -18,6 +18,11 @@ namespace org.bidib.Net.NetBiDiB.Message
         string Emitter { get; set; }
 
         /// <summary>
+        /// Gets or sets the username
+        /// </summary>
+        string Username { get; set; }
+
+        /// <summary>
         /// Gets or sets the local unique id
         /// </summary>
         byte[] UniqueId { get; set; }
@@ -27,6 +32,10 @@ namespace org.bidib.Net.NetBiDiB.Message
         /// </summary>
         byte[] Address { get; }
 
+        /// <summary>
+        /// Gets or sets the acting client role against the other member
+        /// </summary>
+        NetBiDiBClientRole ClientRole { get; set; }
 
         /// <summary>
         /// Gets the current participant

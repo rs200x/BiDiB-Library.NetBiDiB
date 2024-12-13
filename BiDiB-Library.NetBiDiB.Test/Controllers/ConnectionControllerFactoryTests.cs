@@ -45,13 +45,15 @@ namespace org.bidib.Net.NetBiDiB.Test.Controllers
         public void GetController_ShouldCreateAndInitController()
         {
             // Arrange
-            var config = new Mock<INetBiDiBConfig>().SetupAllProperties();
-            config.Object.ApplicationName = "APP";
-            config.Object.NetworkHostAddress = "127.0.0.1";
-            config.Object.NetworkPortNumber = 123;
+            var config = new NetBidibConfig
+            {
+                NetBiDiBHostAddress = "127.0.0.1",
+                NetBiDiBPortNumber = 123,
+                ApplicationName = "APP"
+            };
 
             // Act
-            var controller = Target.GetController(config.Object);
+            var controller = Target.GetController(config);
 
             // Assert
             controller.Should().NotBeNull();

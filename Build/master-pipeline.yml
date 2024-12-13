@@ -28,6 +28,14 @@ steps:
       feedsToUse: 'config'
       nugetConfigPath: 'nuget.config'
       restoreArguments: '/property:Configuration=$(BuildConfiguration)'
+      
+  - task: SonarCloudPrepare@3
+    inputs:
+      SonarCloud: 'rs200x'
+      organization: 'rs200x-github'
+      scannerMode: 'dotnet'
+      projectKey: 'bidib-library-netbidib'
+      projectVersion: '$(version)'
   
   - task: VSBuild@1
     inputs:
@@ -48,8 +56,10 @@ steps:
       testFiltercriteria: TestCategory=UnitTest|TestCategory=IntegrationTest
       codeCoverageEnabled: true
       runSettingsFile: '$(System.DefaultWorkingDirectory)\CodeCoverage.runsettings'
+      
+  - task: SonarCloudAnalyze@3
 
-  - task: BuildQualityChecks@8
+  - task: BuildQualityChecks@9
     continueOnError: true
     inputs:
       checkWarnings: true
@@ -93,3 +103,7 @@ steps:
       nuGetFeedType: 'internal'
       publishVstsFeed: '318ba8a7-6ebb-41b0-994d-1baee3e08af0'
       allowPackageConflicts: true
+      
+  - task: SonarCloudPublish@3
+    inputs:
+      pollingTimeoutSec: "300"

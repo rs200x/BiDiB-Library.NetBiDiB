@@ -5,6 +5,8 @@ using org.bidib.Net.NetBiDiB.Controllers;
 using org.bidib.Net.NetBiDiB.Message;
 using org.bidib.Net.NetBiDiB.Services;
 
+[assembly: System.Runtime.InteropServices.ComVisible(false)]
+
 namespace org.bidib.Net.NetBiDiB;
 
 public static class DependencyExtensions

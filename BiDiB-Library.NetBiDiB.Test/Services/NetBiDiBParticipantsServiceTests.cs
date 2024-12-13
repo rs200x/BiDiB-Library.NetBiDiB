@@ -23,7 +23,7 @@ namespace org.bidib.Net.NetBiDiB.Test.Services
             ioService = new Mock<IIoService>();
             jsonService = new Mock<IJsonService>();
 
-            Target = new NetBiDiBParticipantsService(ioService.Object, jsonService.Object, NullLoggerFactory.Instance);
+            Target = new NetBiDiBParticipantsService(ioService.Object, jsonService.Object, NullLogger<NetBiDiBParticipantsService>.Instance);
         }
 
         [TestMethod]

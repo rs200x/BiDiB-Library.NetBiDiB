@@ -14,243 +14,263 @@ using org.bidib.Net.NetBiDiB.Message;
 using org.bidib.Net.NetBiDiB.Models;
 using org.bidib.Net.NetBiDiB.Services;
 
-namespace org.bidib.Net.NetBiDiB.Controllers
+namespace org.bidib.Net.NetBiDiB.Controllers;
+
+public class NetBiDiBController : SocketController<INetBiDiBConfig>, INetBiDiBController
 {
-    public class NetBiDiBController : SocketController<INetBiDiBConfig>, INetBiDiBController
+    private readonly ILogger<NetBiDiBController> logger;
+    private readonly ILogger serviceLogger;
+    private readonly INetBiDiBMessageProcessor messageProcessor;
+    private readonly INetBiDiBParticipantsService participantsService;
+    private readonly IMessageFactory messageFactory;
+    private readonly byte[] instanceId = [0, 0x20, 0x0D, 0xFB, 0x00, 10, 20];
+    private byte pairingTimeout;
+    private DateTime timeoutTime;
+    private readonly object lockObject = new ();
+
+    private bool IsProcessorConnected => messageProcessor.CurrentState is NetBiDiBConnectionState.ConnectedControlling or NetBiDiBConnectionState.ConnectedUncontrolled;
+
+    private DateTime TimeoutTime
     {
-        private readonly ILogger<NetBiDiBController> logger;
-        private readonly ILogger serviceLogger;
-        private readonly INetBiDiBMessageProcessor messageProcessor;
-        private readonly INetBiDiBParticipantsService participantsService;
-        private readonly IMessageFactory messageFactory;
-        private readonly byte[] instanceId = { 0, 0x20, 0x0D, 0xFB, 0x00, 10, 20 };
-        private byte pairingTimeout;
-        private DateTime timeoutTime;
-        private readonly object lockObject = new ();
-
-        private bool IsProcessorConnected => messageProcessor.CurrentState is NetBiDiBConnectionState.ConnectedControlling or NetBiDiBConnectionState.ConnectedUncontrolled;
-
-        private DateTime TimeoutTime
+        get
         {
-            get
+            lock (lockObject)
             {
-                lock (lockObject)
-                {
-                    return timeoutTime;
-                }
-            }
-
-            set
-            {
-                lock (lockObject)
-                {
-                    timeoutTime = value;
-                }
+                return timeoutTime;
             }
         }
 
-        public NetBiDiBController(
-            INetBiDiBMessageProcessor messageProcessor, 
-            INetBiDiBParticipantsService participantsService, 
-            IMessageFactory messageFactory,  
-            ILoggerFactory loggerFactory):base(loggerFactory)
+        set
         {
-            this.messageProcessor = messageProcessor ?? throw new ArgumentNullException(nameof(messageProcessor));
-            this.participantsService = participantsService;
-            this.messageFactory = messageFactory;
-            logger = loggerFactory.CreateLogger<NetBiDiBController>();
-            serviceLogger = loggerFactory.CreateLogger(BiDiBConstants.LoggerContextMessage);
-            messageProcessor.SendMessage = SendMessage;
-            messageProcessor.ConnectionStateChanged += HandleMessageProcessorConnectionStateChanged;
-        }
-
-        public override bool MessageSecurityEnabled => false;
-
-        public override ConnectionStateInfo ConnectionState => GetConnectionStateInfo(string.Empty);
-
-        public override string ConnectionName => $"netBiDiB {string.Join("", instanceId.Select(x => $"{x:X2}"))} -> {base.ConnectionName}";
-
-        public override void Initialize(INetBiDiBConfig config)
-        {
-            if (config == null) { throw new ArgumentNullException(nameof(config)); }
-
-            if (!IsConnected)
+            lock (lockObject)
             {
-                base.Initialize(config);
-            }
-
-            pairingTimeout = config.NetBiDiBPairingTimeout;
-            UpdateInstanceId(config);
-
-            messageProcessor.Emitter = config.ApplicationName;
-            messageProcessor.UniqueId = instanceId;
-        }
-
-        private void UpdateInstanceId(INetBiDiBConfig config)
-        {
-            if (string.IsNullOrEmpty(config.NetBiDiBClientId)) { return; }
-
-            try
-            {
-                var clientId = Enumerable.Range(0, config.NetBiDiBClientId.Length)
-                    .Where(x => x % 2 == 0)
-                    .Select(x => Convert.ToByte(config.NetBiDiBClientId.Substring(x, 2), 16))
-                    .ToArray();
-
-                Array.Copy(clientId, 0, instanceId, instanceId.Length - clientId.Length, clientId.Length);
-            }
-            catch (Exception e) when (e is ArgumentNullException or ArgumentOutOfRangeException)
-            {
-                logger.LogError(e, "Could not parse '{ClientId}' for custom client id", config.NetBiDiBClientId);
+                timeoutTime = value;
             }
         }
+    }
 
-        public override async Task<ConnectionStateInfo> OpenConnectionAsync()
+    public NetBiDiBController(
+        INetBiDiBMessageProcessor messageProcessor, 
+        INetBiDiBParticipantsService participantsService, 
+        IMessageFactory messageFactory,  
+        ILoggerFactory loggerFactory) : base(loggerFactory)
+    {
+        this.messageProcessor = messageProcessor ?? throw new ArgumentNullException(nameof(messageProcessor));
+        
+        this.participantsService = participantsService;
+        this.messageFactory = messageFactory;
+        
+        if (loggerFactory == null)
         {
-            if (IsProcessorConnected)
-            {
-                // pairing was processed in the background in the mean time
-                return ProcessCurrentState(false);
-            }
+            throw new ArgumentNullException(nameof(loggerFactory));
+        }
+        logger = loggerFactory.CreateLogger<NetBiDiBController>();
+        serviceLogger = loggerFactory.CreateLogger(BiDiBConstants.LoggerContextMessage);
+        messageProcessor.SendMessage = SendMessage;
+        messageProcessor.ConnectionStateChanged += HandleMessageProcessorConnectionStateChanged;
+    }
 
-            if (base.ConnectionState.InterfaceState == InterfaceConnectionState.Disconnected)
-            {
-                var state = await base.OpenConnectionAsync().ConfigureAwait(false);
-                if (!state.IsConnected) { return state; }
-            }
+    public override bool MessageSecurityEnabled => false;
 
-            TimeoutTime = DateTime.Now.AddSeconds(6);
-            messageProcessor.Start(participantsService.TrustedParticipants.Select(p => p.Id), pairingTimeout);
+    public override ConnectionStateInfo ConnectionState => GetConnectionStateInfo(string.Empty);
 
-            while (!IsProcessorConnected && DateTime.Now < TimeoutTime)
-            {
-                await Task.Delay(300).ConfigureAwait(false);
-            }
+    public override string ConnectionName => $"netBiDiB {string.Join("", instanceId.Select(x => $"{x:X2}"))} -> {base.ConnectionName}";
 
-            return ProcessCurrentState(DateTime.Now >= TimeoutTime);
+    public override void Initialize(INetBiDiBConfig config)
+    {
+        if (config == null) { throw new ArgumentNullException(nameof(config)); }
+
+        var netBiDiBConfig = new NetBidibConfig
+        {
+            ApplicationName = config.ApplicationName,
+            ConnectionType = config.ConnectionType,
+            ConnectionStrategyType = config.ConnectionStrategyType,
+            NetBiDiBClientId = config.NetBiDiBClientId,
+            NetBiDiBPairingTimeout = config.NetBiDiBPairingTimeout,
+            NetBiDiBHostAddress = config.NetBiDiBHostAddress,
+            NetBiDiBPortNumber = config.NetBiDiBPortNumber,
+            NetBiDiBPairingStoreDirectory = config.NetBiDiBPairingStoreDirectory,
+            ClientRole = config.ClientRole,
+        };
+            
+        if (!IsConnected)
+        {
+            base.Initialize(netBiDiBConfig);
         }
 
-        private NetBiDiBConnectionStateInfo ProcessCurrentState(bool isTimeout)
+        pairingTimeout = netBiDiBConfig.NetBiDiBPairingTimeout;
+        UpdateInstanceId(netBiDiBConfig);
+
+        messageProcessor.Emitter =  !string.IsNullOrEmpty(netBiDiBConfig.ApplicationName) ? netBiDiBConfig.ApplicationName : "BiDiB";
+        messageProcessor.Username = !string.IsNullOrEmpty(config.Username) ? config.Username : Environment.UserDomainName;
+        messageProcessor.UniqueId = instanceId;
+        messageProcessor.ClientRole = config.ClientRole;
+    }
+
+    private void UpdateInstanceId(INetBiDiBConfig config)
+    {
+        if (string.IsNullOrEmpty(config.NetBiDiBClientId)) { return; }
+
+        try
         {
-            var error = GetError(isTimeout);
+            var clientId = Enumerable.Range(0, config.NetBiDiBClientId.Length)
+                .Where(x => x % 2 == 0)
+                .Select(x => Convert.ToByte(config.NetBiDiBClientId.Substring(x, 2), 16))
+                .ToArray();
 
-            if (IsProcessorConnected)
-            {
-                participantsService.AddOrUpdate(messageProcessor.CurrentParticipant);
-            }
+            Array.Copy(clientId, 0, instanceId, instanceId.Length - clientId.Length, clientId.Length);
+        }
+        catch (Exception e) when (e is ArgumentNullException or ArgumentOutOfRangeException)
+        {
+            logger.LogError(e, "Could not parse '{ClientId}' for custom client id", config.NetBiDiBClientId);
+        }
+    }
 
-            if (!IsProcessorConnected)
-            {
-                messageProcessor.Reset();
-            }
-
-            return GetConnectionStateInfo(error);
+    public override async Task<ConnectionStateInfo> OpenConnectionAsync()
+    {
+        if (IsProcessorConnected)
+        {
+            // pairing was processed in the background in the mean time
+            return ProcessCurrentState(false);
         }
 
-        private string GetError(bool isTimeout)
+        if (base.ConnectionState.InterfaceState == InterfaceConnectionState.Disconnected)
         {
-            string error = null;
-            if (messageProcessor.CurrentState == NetBiDiBConnectionState.PairingRejected)
+            var state = await base.OpenConnectionAsync().ConfigureAwait(false);
+            if (!state.IsConnected) { return state; }
+        }
+
+        TimeoutTime = DateTime.Now.AddSeconds(6);
+        messageProcessor.Start(participantsService.TrustedParticipants.Select(p => p.Id), pairingTimeout);
+
+        while (!IsProcessorConnected && DateTime.Now < TimeoutTime)
+        {
+            await Task.Delay(300).ConfigureAwait(false);
+        }
+
+        return ProcessCurrentState(DateTime.Now >= TimeoutTime);
+    }
+
+    private NetBiDiBConnectionStateInfo ProcessCurrentState(bool isTimeout)
+    {
+        var error = GetError(isTimeout);
+
+        if (IsProcessorConnected)
+        {
+            participantsService.AddOrUpdate(messageProcessor.CurrentParticipant);
+        }
+
+        if (!IsProcessorConnected)
+        {
+            messageProcessor.Reset();
+        }
+
+        return GetConnectionStateInfo(error);
+    }
+
+    private string GetError(bool isTimeout)
+    {
+        string error = null;
+        if (messageProcessor.CurrentState == NetBiDiBConnectionState.PairingRejected)
+        {
+            error = Resources.PairingRejectedByRemote;
+        }
+
+        if (isTimeout && messageProcessor.CurrentState == NetBiDiBConnectionState.RequestPairing || messageProcessor.RemoteState == NetBiDiBConnectionState.RequestPairing)
+        {
+            error = Resources.PairingProcessAborted;
+        }
+
+        if (!IsProcessorConnected && isTimeout && string.IsNullOrEmpty(error))
+        {
+            error = Resources.ConnectionProcessTimedOut;
+            Close();
+        }
+
+        return error;
+    }
+
+    private void SendMessage(BiDiBOutputMessage outputMessage)
+    {
+        var message = BiDiBMessageGenerator.GenerateMessage(outputMessage);
+
+        SendMessage(message, message.Length);
+        logger.LogDebug("{Message}", outputMessage);
+        serviceLogger.LogDebug("{OutputMessage} {DataString}", outputMessage, message.GetDataString());
+    }
+
+    public override void ProcessMessage(byte[] message, int messageSize)
+    {
+        if (message == null) { return; }
+
+        var size = messageSize > message.Length ? message.Length : messageSize;
+        var messageBytes = new byte[size];
+        Array.Copy(message, 0, messageBytes, 0, size);
+
+        if (!IsProcessorConnected)
+        {
+            foreach (var subMessage in messageBytes.SplitByFirst())
             {
-                error = Resources.PairingRejectedByRemote;
+                var inputMessage = messageFactory.CreateInputMessage(subMessage);
+                serviceLogger.LogDebug("{InputMessage} {SubMessage}", inputMessage, subMessage.GetDataString());
+                messageProcessor.ProcessMessage(inputMessage);
             }
 
-            if (isTimeout && messageProcessor.CurrentState == NetBiDiBConnectionState.RequestPairing || messageProcessor.RemoteState == NetBiDiBConnectionState.RequestPairing)
-            {
-                error = Resources.PairingProcessAborted;
-            }
-
-            if (!IsProcessorConnected && isTimeout && string.IsNullOrEmpty(error))
-            {
-                error = Resources.ConnectionProcessTimedOut;
-                Close();
-            }
-
-            return error;
+            return;
         }
 
-        private void SendMessage(BiDiBOutputMessage outputMessage)
-        {
-            var message = BiDiBMessageGenerator.GenerateMessage(outputMessage);
+        base.ProcessMessage(messageBytes, size);
+    }
 
-            SendMessage(message, message.Length);
-            logger.LogDebug("{Message}", outputMessage);
-            serviceLogger.LogDebug("{OutputMessage} {DataString}", outputMessage, message.GetDataString());
+    public override void RejectControl()
+    {
+        messageProcessor.RejectControl();
+    }
+
+    public override void RequestControl()
+    {
+        messageProcessor.RequestControl();
+    }
+
+    public override void Close()
+    {
+        base.Close();
+        TimeoutTime = DateTime.Now.AddSeconds(0);
+
+        if (IsProcessorConnected)
+        {
+            messageProcessor.Reset();
+        }
+    }
+
+    private void HandleMessageProcessorConnectionStateChanged(object sender, EventArgs e)
+    {
+        OnConnectionStateChanged();
+
+        if (messageProcessor.CurrentState == NetBiDiBConnectionState.RequestPairing)
+        {
+            logger.LogDebug("State changed to request pairing, extending timeout by {PairingTimeout}", pairingTimeout);
+            TimeoutTime = DateTime.Now.AddSeconds(pairingTimeout);
         }
 
-        public override void ProcessMessage(byte[] message, int messageSize)
+        if (messageProcessor.CurrentState == NetBiDiBConnectionState.PairingRejected)
         {
-            if (message == null) { return; }
-
-            var size = messageSize > message.Length ? message.Length : messageSize;
-            var messageBytes = new byte[size];
-            Array.Copy(message, 0, messageBytes, 0, size);
-
-            if (!IsProcessorConnected)
-            {
-                foreach (var subMessage in messageBytes.SplitByFirst())
-                {
-                    var inputMessage = messageFactory.CreateInputMessage(subMessage);
-                    serviceLogger.LogDebug("{InputMessage} {SubMessage}", inputMessage, subMessage.GetDataString());
-                    messageProcessor.ProcessMessage(inputMessage);
-                }
-
-                return;
-            }
-
-            base.ProcessMessage(messageBytes, size);
-        }
-
-        public override void RejectControl()
-        {
-            messageProcessor.RejectControl();
-        }
-
-        public override void RequestControl()
-        {
-            messageProcessor.RequestControl();
-        }
-
-        public override void Close()
-        {
-            base.Close();
+            logger.LogDebug("Pairing was rejected, stopping timeout");
             TimeoutTime = DateTime.Now.AddSeconds(0);
-
-            if (IsProcessorConnected)
-            {
-                messageProcessor.Reset();
-            }
         }
+    }
 
-        private void HandleMessageProcessorConnectionStateChanged(object sender, EventArgs e)
-        {
-            OnConnectionStateChanged();
-
-            if (messageProcessor.CurrentState == NetBiDiBConnectionState.RequestPairing)
-            {
-                logger.LogDebug("State changed to request pairing, extending timeout by {PairingTimeout}", pairingTimeout);
-                TimeoutTime = DateTime.Now.AddSeconds(pairingTimeout);
-            }
-
-            if (messageProcessor.CurrentState == NetBiDiBConnectionState.PairingRejected)
-            {
-                logger.LogDebug("Pairing was rejected, stopping timeout");
-                TimeoutTime = DateTime.Now.AddSeconds(0);
-            }
-        }
-
-        private NetBiDiBConnectionStateInfo GetConnectionStateInfo(string error)
-        {
-            return new NetBiDiBConnectionStateInfo(
-                messageProcessor.InterfaceConnectionState,                 
-                messageProcessor.CurrentState,
-                messageProcessor.RemoteState,
-                messageProcessor.CurrentParticipant.Id, 
-                messageProcessor.CurrentParticipant.ProductName, 
-                ConnectionName,
-                messageProcessor.Address,
-                error, 
-                pairingTimeout);
-        }
+    private NetBiDiBConnectionStateInfo GetConnectionStateInfo(string error)
+    {
+        return new NetBiDiBConnectionStateInfo(
+            messageProcessor.InterfaceConnectionState,                 
+            messageProcessor.CurrentState,
+            messageProcessor.RemoteState,
+            messageProcessor.CurrentParticipant.Id, 
+            messageProcessor.CurrentParticipant.ProductName, 
+            ConnectionName,
+            messageProcessor.Address,
+            error, 
+            pairingTimeout);
     }
 }

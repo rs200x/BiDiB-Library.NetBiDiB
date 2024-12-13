@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using org.bidib.Net.Core;
 using org.bidib.Net.Core.Enumerations;
 using org.bidib.Net.Core.Message;
+using org.bidib.Net.Core.Models.Messages.Input;
 using org.bidib.Net.Core.Models.Messages.Output;
 using org.bidib.Net.NetBiDiB.Message;
 using org.bidib.Net.Testing;
@@ -13,6 +14,10 @@ using LocalLinkMessage = org.bidib.Net.Core.Models.Messages.Input.LocalLinkMessa
 using LocalLinkOutputMessage = org.bidib.Net.Core.Models.Messages.Output.LocalLinkMessage;
 using ProtocolSignatureOutMessage = org.bidib.Net.Core.Models.Messages.Output.ProtocolSignatureMessage;
 using ProtocolSignatureInMessage = org.bidib.Net.Core.Models.Messages.Input.ProtocolSignatureMessage;
+using LocalLogonInMessage = org.bidib.Net.Core.Models.Messages.Input.LocalLogonMessage;
+using LocalLogonOutMessage = org.bidib.Net.Core.Models.Messages.Output.LocalLogonMessage;
+using LocalLogonAckInMessage = org.bidib.Net.Core.Models.Messages.Input.LocalLogonAckMessage;
+using LocalLogonAckOutMessage = org.bidib.Net.Core.Models.Messages.Output.LocalLogonAckMessage;
 
 namespace org.bidib.Net.NetBiDiB.Test.Message
 {
@@ -21,8 +26,8 @@ namespace org.bidib.Net.NetBiDiB.Test.Message
     public class NetBiDiBMessageProcessorTests : TestClass
     {
         private NetBiDiBMessageProcessor target;
-        private readonly byte[] localId = { 0, 0, 0x0D, 0xFA, 0x01, 3, 1 };
-        private readonly byte[] remoteId = { 10, 0, 0x0D, 0xFA, 0x01, 3, 2 };
+        private readonly byte[] localId = [0, 0, 0x0D, 0xFA, 0x01, 3, 1];
+        private readonly byte[] remoteId = [10, 0, 0x0D, 0xFA, 0x01, 3, 2];
 
         protected override void OnTestInitialize()
         {
@@ -93,9 +98,9 @@ namespace org.bidib.Net.NetBiDiB.Test.Message
         {
             // Arrange
             target.SendMessage = _ => { };
-            var messageBytes = BiDiBMessageGenerator.GenerateMessage(new byte[] { 0 }, BiDiBMessage.MSG_LOCAL_LINK, 0, 0xFF, 0, 0, 0, 0, 0, 0, 1);
+            var messageBytes = BiDiBMessageGenerator.GenerateMessage([0], BiDiBMessage.MSG_LOCAL_LINK, 0, 0xFF, 0, 0, 0, 0, 0, 0, 1);
             target.Start(new List<byte[]>(), 0);
-            List<LocalLinkOutputMessage> receivedMessages = new List<LocalLinkOutputMessage>();
+            List<LocalLinkOutputMessage> receivedMessages = [];
             target.SendMessage = message => { receivedMessages.Add(message as LocalLinkOutputMessage); };
 
             // Act
@@ -114,7 +119,7 @@ namespace org.bidib.Net.NetBiDiB.Test.Message
             // Arrange
             LocalLinkOutputMessage receivedMessage = null;
             target.SendMessage = message => { receivedMessage = message as LocalLinkOutputMessage; };
-            var messageBytes = BiDiBMessageGenerator.GenerateMessage(new byte[] { 0 }, BiDiBMessage.MSG_LOCAL_LINK, 0, 0xFF, 0, 0, 0, 0, 0, 0, 1);
+            var messageBytes = BiDiBMessageGenerator.GenerateMessage([0], BiDiBMessage.MSG_LOCAL_LINK, 0, 0xFF, 0, 0, 0, 0, 0, 0, 1);
             target.Start(new List<byte[]> { new byte[] { 0, 0, 0, 0, 0, 0, 1 } }, 0);
 
             // Act
@@ -125,13 +130,57 @@ namespace org.bidib.Net.NetBiDiB.Test.Message
             receivedMessage.Should().NotBeNull();
             receivedMessage.LinkType.Should().Be(LocalLinkType.STATUS_PAIRED);
         }
+        
+        [TestMethod]
+        public void ProcessMessage_ShouldSetStateConnectedControlling_WhenLocalLogon()
+        {
+            // Arrange
+            BiDiBOutputMessage outMessage = null;
+            target.SendMessage = m => { outMessage = m; };
+            var messageBytes = BiDiBMessageGenerator.GenerateMessage(new LocalLogonOutMessage(new byte[] { 0, 0, 0, 0, 0, 0, 1 }));
+
+            // Act
+            target.ProcessMessage(new LocalLogonInMessage(messageBytes));
+
+            // Assert
+            target.CurrentState.Should().Be(NetBiDiBConnectionState.ConnectedControlling);
+            outMessage.Should().BeOfType<LocalLogonAckOutMessage>();
+        }
+        
+        [TestMethod]
+        public void ProcessMessage_ShouldSetStateConnectedControlling_WhenLocalLogonAck()
+        {
+            // Arrange
+            var messageBytes = BiDiBMessageGenerator.GenerateMessage(new LocalLogonAckOutMessage([0, 0, 0, 0, 0, 0, 1]));
+
+            // Act
+            target.ProcessMessage(new LocalLogonAckInMessage(messageBytes));
+
+            // Assert
+            target.CurrentState.Should().Be(NetBiDiBConnectionState.ConnectedControlling);
+            target.Address.Should().BeEquivalentTo([0]);
+        }
+        
+        [TestMethod]
+        public void ProcessMessage_ShouldSetStateConnectedUncontrolled_WhenLocalOff()
+        {
+            // Arrange
+            target.SendMessage = _ => {  };
+            var messageBytes = BiDiBMessageGenerator.GenerateMessage([0], BiDiBMessage.MSG_LOCAL_LOGOFF, 0, 0, 0, 0, 0, 0, 0, 1);
+
+            // Act
+            target.ProcessMessage(new LocalLogoffMessage(messageBytes));
+
+            // Assert
+            target.CurrentState.Should().Be(NetBiDiBConnectionState.ConnectedUncontrolled);
+        }
 
         [TestMethod]
         public void ProcessMessage_ShouldSetRemoteName()
         {
             // Arrange
             target.SendMessage = _ => { };
-            var messageBytes = BiDiBMessageGenerator.GenerateMessage(new byte[] { 0 }, BiDiBMessage.MSG_LOCAL_LINK, 0, 0, 0x03, 0x31, 0x41, 0x51);
+            var messageBytes = BiDiBMessageGenerator.GenerateMessage([0], BiDiBMessage.MSG_LOCAL_LINK, 0, 0, 0x03, 0x31, 0x41, 0x51);
             target.Start(new List<byte[]> { new byte[] { 0, 0, 0, 0, 0, 0, 1 } }, 0);
 
             // Act
@@ -146,7 +195,7 @@ namespace org.bidib.Net.NetBiDiB.Test.Message
         {
             // Arrange
             target.SendMessage = _ => { };
-            var messageBytes = BiDiBMessageGenerator.GenerateMessage(new byte[] { 0 }, BiDiBMessage.MSG_LOCAL_LINK, 0, (byte)LocalLinkType.DESCRIPTOR_P_VERSION, 0x08, 0x00);
+            var messageBytes = BiDiBMessageGenerator.GenerateMessage([0], BiDiBMessage.MSG_LOCAL_LINK, 0, (byte)LocalLinkType.DESCRIPTOR_P_VERSION, 0x08, 0x00);
             target.Start(new List<byte[]> { new byte[] { 0, 0, 0, 0, 0, 0, 1 } }, 0);
 
             // Act
@@ -160,8 +209,8 @@ namespace org.bidib.Net.NetBiDiB.Test.Message
         public void ProcessMessage_ShouldSetUserName()
         {
             // Arrange
-            target.SendMessage = message => { };
-            var messageBytes = BiDiBMessageGenerator.GenerateMessage(new byte[] { 0 }, BiDiBMessage.MSG_LOCAL_LINK, 0, (byte)LocalLinkType.DESCRIPTOR_USER_STRING, 0x03, 0x41, 0x42, 0x43);
+            target.SendMessage = _ => { };
+            var messageBytes = BiDiBMessageGenerator.GenerateMessage([0], BiDiBMessage.MSG_LOCAL_LINK, 0, (byte)LocalLinkType.DESCRIPTOR_USER_STRING, 0x03, 0x41, 0x42, 0x43);
             target.Start(new List<byte[]> { new byte[] { 0, 0, 0, 0, 0, 0, 1 } }, 0);
 
             // Act
@@ -181,14 +230,14 @@ namespace org.bidib.Net.NetBiDiB.Test.Message
             target.Start(new List<byte[]> { remoteId }, 0);
             var parameters = new List<byte> { (byte)LocalLinkType.DESCRIPTOR_UID };
             parameters.AddRange(remoteId);
-            var messageBytes = BiDiBMessageGenerator.GenerateMessage(new byte[] { 0 }, BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
+            var messageBytes = BiDiBMessageGenerator.GenerateMessage([0], BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
             target.ProcessMessage(new LocalLinkMessage(messageBytes));
 
-            parameters = new List<byte> { (byte)LocalLinkType.PAIRING_REQUEST };
+            parameters = [(byte)LocalLinkType.PAIRING_REQUEST];
             parameters.AddRange(localId);
             parameters.AddRange(remoteId);
             parameters.Add(30);
-            messageBytes = BiDiBMessageGenerator.GenerateMessage(new byte[] { 0 }, BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
+            messageBytes = BiDiBMessageGenerator.GenerateMessage([0], BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
 
             // Act
             target.ProcessMessage(new LocalLinkMessage(messageBytes));
@@ -210,13 +259,13 @@ namespace org.bidib.Net.NetBiDiB.Test.Message
             target.Start(new List<byte[]> { remoteId }, 1);
             var parameters = new List<byte> { (byte)LocalLinkType.DESCRIPTOR_UID };
             parameters.AddRange(remoteId);
-            var messageBytes = BiDiBMessageGenerator.GenerateMessage(new byte[] { 0 }, BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
+            var messageBytes = BiDiBMessageGenerator.GenerateMessage([0], BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
             target.ProcessMessage(new LocalLinkMessage(messageBytes));
 
-            parameters = new List<byte> { (byte)LocalLinkType.STATUS_UNPAIRED };
+            parameters = [(byte)LocalLinkType.STATUS_UNPAIRED];
             parameters.AddRange(localId);
             parameters.AddRange(remoteId);
-            messageBytes = BiDiBMessageGenerator.GenerateMessage(new byte[] { 0 }, BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
+            messageBytes = BiDiBMessageGenerator.GenerateMessage([0], BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
 
             // Act
             target.ProcessMessage(new LocalLinkMessage(messageBytes));
@@ -233,25 +282,25 @@ namespace org.bidib.Net.NetBiDiB.Test.Message
         public void ProcessMessage_ShouldSetPaired_WhenDisconnectedPairingRequest()
         {
             // Arrange
-            List<LocalLinkOutputMessage> receivedMessages = new List<LocalLinkOutputMessage>();
+            List<LocalLinkOutputMessage> receivedMessages = [];
             target.SendMessage = message => { receivedMessages.Add(message as LocalLinkOutputMessage); };
 
             target.Start(new List<byte[]> { remoteId }, 1);
             var parameters = new List<byte> { (byte)LocalLinkType.DESCRIPTOR_UID };
             parameters.AddRange(remoteId);
-            var messageBytes = BiDiBMessageGenerator.GenerateMessage(new byte[] { 0 }, BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
+            var messageBytes = BiDiBMessageGenerator.GenerateMessage([0], BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
             target.ProcessMessage(new LocalLinkMessage(messageBytes));
 
-            parameters = new List<byte> { (byte)LocalLinkType.STATUS_UNPAIRED };
+            parameters = [(byte)LocalLinkType.STATUS_UNPAIRED];
             parameters.AddRange(localId);
             parameters.AddRange(remoteId);
-            messageBytes = BiDiBMessageGenerator.GenerateMessage(new byte[] { 0 }, BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
+            messageBytes = BiDiBMessageGenerator.GenerateMessage([0], BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
             target.ProcessMessage(new LocalLinkMessage(messageBytes));
 
-            parameters = new List<byte> { (byte)LocalLinkType.STATUS_PAIRED };
+            parameters = [(byte)LocalLinkType.STATUS_PAIRED];
             parameters.AddRange(localId);
             parameters.AddRange(remoteId);
-            messageBytes = BiDiBMessageGenerator.GenerateMessage(new byte[] { 0 }, BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
+            messageBytes = BiDiBMessageGenerator.GenerateMessage([0], BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
 
             // Act
             target.ProcessMessage(new LocalLinkMessage(messageBytes));
@@ -291,7 +340,7 @@ namespace org.bidib.Net.NetBiDiB.Test.Message
 
             var parameters = new List<byte> { (byte)LocalLinkType.DESCRIPTOR_UID };
             parameters.AddRange(remoteId);
-            var messageBytes = BiDiBMessageGenerator.GenerateMessage(new byte[] { 0 }, BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
+            var messageBytes = BiDiBMessageGenerator.GenerateMessage([0], BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
             target.ProcessMessage(new LocalLinkMessage(messageBytes));
 
             // Act
@@ -307,12 +356,12 @@ namespace org.bidib.Net.NetBiDiB.Test.Message
         public void Reset_ShouldResetStates()
         {
             // Arrange
-            target.SendMessage = message => { };
+            target.SendMessage = _ => { };
             target.Start(new List<byte[]>(), 1);
 
             var parameters = new List<byte> { (byte)LocalLinkType.DESCRIPTOR_UID };
             parameters.AddRange(remoteId);
-            var messageBytes = BiDiBMessageGenerator.GenerateMessage(new byte[] { 0 }, BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
+            var messageBytes = BiDiBMessageGenerator.GenerateMessage([0], BiDiBMessage.MSG_LOCAL_LINK, 0, parameters.ToArray());
             target.ProcessMessage(new LocalLinkMessage(messageBytes));
 
             // Act

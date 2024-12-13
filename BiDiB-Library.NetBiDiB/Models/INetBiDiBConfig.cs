@@ -13,4 +13,8 @@ public interface INetBiDiBConfig : INetConfig
     int NetBiDiBPortNumber { get; set; }
 
     string NetBiDiBPairingStoreDirectory { get; set; }
+
+    string Username { get; set; }
+
+    NetBiDiBClientRole ClientRole { get; set; }
 }

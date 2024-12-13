@@ -31,7 +31,8 @@ public class NetBiDiBControllerTests : TestClass<NetBiDiBController>
         messageFactory = new Mock<IMessageFactory>();
         var loggerFactory = new Mock<ILoggerFactory>();
         loggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(new Mock<ILogger>().Object);
-        Target = new NetBiDiBController(messageProcessor.Object, participantsService.Object,messageFactory.Object, loggerFactory.Object);
+        Target = new NetBiDiBController(messageProcessor.Object, participantsService.Object, messageFactory.Object,
+            loggerFactory.Object);
     }
 
     protected override void OnTestCleanup()
@@ -57,13 +58,15 @@ public class NetBiDiBControllerTests : TestClass<NetBiDiBController>
     public void Initialize_ShouldUseDefaultId_WhenNetBiDiBClientIdNotSet()
     {
         // Arrange
-        var config = new Mock<INetBiDiBConfig>();
-        config.Setup(x => x.NetBiDiBClientId).Returns(string.Empty);
-        config.Setup(x => x.NetworkHostAddress).Returns("127.0.0.1");
-        config.Setup(x => x.NetworkPortNumber).Returns(62875);
+        var config = new NetBidibConfig
+        {
+            NetBiDiBClientId = string.Empty,
+            NetBiDiBHostAddress = "127.0.0.1",
+            NetBiDiBPortNumber = 62875
+        };
 
         // Act
-        Target.Initialize(config.Object);
+        Target.Initialize(config);
 
         // Assert
         Target.ConnectionName.Should().Be("netBiDiB 00200DFB000A14 -> 127.0.0.1:62875");
@@ -73,16 +76,59 @@ public class NetBiDiBControllerTests : TestClass<NetBiDiBController>
     public void Initialize_ShouldUseNetBiDiBClientIdForInstanceId()
     {
         // Arrange
-        var config = new Mock<INetBiDiBConfig>();
-        config.Setup(x => x.NetBiDiBClientId).Returns("010101");
-        config.Setup(x => x.NetworkHostAddress).Returns("localhost");
-        config.Setup(x => x.NetworkPortNumber).Returns(62875);
+        var config = new NetBidibConfig
+        {
+            NetBiDiBClientId = "010101",
+            NetBiDiBHostAddress = "localhost",
+            NetBiDiBPortNumber = 62875
+        };
 
         // Act
-        Target.Initialize(config.Object);
+        Target.Initialize(config);
 
         // Assert
         Target.ConnectionName.Should().Be("netBiDiB 00200DFB010101 -> localhost:62875");
+    }
+
+    [TestMethod]
+    public void Initialize_ShouldSetProcessorProperties()
+    {
+        // Arrange
+        var config = new NetBidibConfig
+        {
+            NetBiDiBClientId = "010101",
+            NetBiDiBHostAddress = "localhost",
+            NetBiDiBPortNumber = 62875,
+            ApplicationName = "APP",
+            Username = "User"
+        };
+
+        // Act
+        Target.Initialize(config);
+
+        // Assert
+        messageProcessor.VerifySet(x => x.Emitter = config.ApplicationName);
+        messageProcessor.VerifySet(x => x.Username = config.Username);
+        messageProcessor.VerifySet(x => x.UniqueId = [0, 0x20, 0x0D, 0xFB, 1, 1, 1]);
+    }
+
+    [TestMethod]
+    public void Initialize_ShouldSetDefaultProcessorProperties_WhenNotDefined()
+    {
+        // Arrange
+        var config = new NetBidibConfig
+        {
+            NetBiDiBHostAddress = "localhost",
+            NetBiDiBPortNumber = 62875,
+        };
+
+        // Act
+        Target.Initialize(config);
+
+        // Assert
+        messageProcessor.VerifySet(x => x.Emitter = "BiDiB");
+        messageProcessor.VerifySet(x => x.Username = Environment.UserDomainName);
+        messageProcessor.VerifySet(x => x.UniqueId = [0, 0x20, 0x0D, 0xFB, 0x00, 10, 20]);
     }
 
     [TestMethod]
@@ -101,7 +147,7 @@ public class NetBiDiBControllerTests : TestClass<NetBiDiBController>
         receivedBytes.Should().HaveCount(13);
         receivedBytes.Should().BeEquivalentTo(bytes);
     }
-    
+
     [TestMethod]
     public void ProcessMessage_ShouldSForwardToMessageProcessor_WhenNotConnected()
     {
@@ -116,10 +162,10 @@ public class NetBiDiBControllerTests : TestClass<NetBiDiBController>
         Target.ProcessMessage(bytes, 11);
 
         // Assert
-        messageProcessor.Verify(x=>x.ProcessMessage(inputMessage));
-        messageFactory.Verify(x=>x.CreateInputMessage(bytes));
+        messageProcessor.Verify(x => x.ProcessMessage(inputMessage));
+        messageFactory.Verify(x => x.CreateInputMessage(bytes));
     }
-        
+
     [TestMethod]
     public void RejectControl_ShouldForwardToMessageProcessor()
     {
@@ -129,9 +175,9 @@ public class NetBiDiBControllerTests : TestClass<NetBiDiBController>
         Target.RejectControl();
 
         // Assert
-        messageProcessor.Verify(x=>x.RejectControl(), Times.Once);
+        messageProcessor.Verify(x => x.RejectControl(), Times.Once);
     }
-        
+
     [TestMethod]
     public void RequestControl_ShouldForwardToMessageProcessor()
     {
@@ -141,33 +187,68 @@ public class NetBiDiBControllerTests : TestClass<NetBiDiBController>
         Target.RequestControl();
 
         // Assert
-        messageProcessor.Verify(x=>x.RequestControl(), Times.Once);
+        messageProcessor.Verify(x => x.RequestControl(), Times.Once);
     }
-    
-     
+
+
     [TestMethod]
     public void Close_ShouldReset_WhenInConnectedState()
     {
         // Arrange
         messageProcessor.Setup(x => x.CurrentState).Returns(NetBiDiBConnectionState.ConnectedControlling);
-        
+
         // Act
         Target.Close();
 
         // Assert
-        messageProcessor.Verify(x=>x.Reset(), Times.Once);
+        messageProcessor.Verify(x => x.Reset(), Times.Once);
     }
-    
+
     [TestMethod]
     public void Close_ShouldNotReset_WhenInDisconnectedState()
     {
         // Arrange
         messageProcessor.Setup(x => x.CurrentState).Returns(NetBiDiBConnectionState.Disconnected);
-        
+
         // Act
         Target.Close();
 
         // Assert
-        messageProcessor.Verify(x=>x.Reset(), Times.Never);
+        messageProcessor.Verify(x => x.Reset(), Times.Never);
+    }
+
+    [TestMethod]
+    public void ConnectionState_ShouldReturnCurrentState()
+    {
+        // Arrange
+        messageProcessor.Setup(x => x.RemoteState)
+            .Returns(NetBiDiBConnectionState.SendSignature);
+        messageProcessor.Setup(x => x.CurrentState)
+            .Returns(NetBiDiBConnectionState.WaitForId);
+        messageProcessor.Setup(x => x.InterfaceConnectionState)
+            .Returns(InterfaceConnectionState.FullyConnected);
+        var participant = new NetBiDiBParticipant { Id = [1], ProductName = "AB" };
+        messageProcessor.Setup(x => x.CurrentParticipant)
+            .Returns(participant);
+        
+        var config = new NetBidibConfig
+        {
+            NetBiDiBHostAddress = "localhost",
+            NetBiDiBPortNumber = 62875,
+        };
+
+        Target.Initialize(config);
+
+        // Act
+        var state = Target.ConnectionState;
+
+        // Assert
+        var netBiDiBState = state as NetBiDiBConnectionStateInfo;
+        Assert.IsNotNull(netBiDiBState);
+        netBiDiBState.LocalState.Should().Be(NetBiDiBConnectionState.WaitForId);
+        netBiDiBState.RemoteState.Should().Be(NetBiDiBConnectionState.SendSignature);
+        netBiDiBState.InterfaceState.Should().Be(InterfaceConnectionState.FullyConnected);
+        netBiDiBState.RemoteId.Should().BeEquivalentTo([1]);
+        netBiDiBState.RemoteName.Should().Be("AB");
     }
 }

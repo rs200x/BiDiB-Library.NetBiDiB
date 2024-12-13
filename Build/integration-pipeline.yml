@@ -32,11 +32,11 @@ steps:
       nugetConfigPath: 'nuget.config'
       restoreArguments: '/property:Configuration=$(BuildConfiguration)'
 
-  - task: SonarCloudPrepare@1
+  - task: SonarCloudPrepare@3
     inputs:
       SonarCloud: 'rs200x'
       organization: 'rs200x-github'
-      scannerMode: 'MSBuild'
+      scannerMode: 'dotnet'
       projectKey: 'bidib-library-netbidib'
       projectVersion: '$(version)'
   
@@ -60,9 +60,9 @@ steps:
       codeCoverageEnabled: true
       runSettingsFile: '$(System.DefaultWorkingDirectory)\CodeCoverage.runsettings'
 
-  - task: SonarCloudAnalyze@1
+  - task: SonarCloudAnalyze@3
 
-  - task: BuildQualityChecks@8
+  - task: BuildQualityChecks@9
     continueOnError: true
     inputs:
       checkWarnings: true
@@ -107,6 +107,6 @@ steps:
       publishVstsFeed: '318ba8a7-6ebb-41b0-994d-1baee3e08af0'
       allowPackageConflicts: true
       
-  - task: SonarCloudPublish@1
+  - task: SonarCloudPublish@3
     inputs:
       pollingTimeoutSec: "300"
