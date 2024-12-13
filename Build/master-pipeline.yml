@@ -29,7 +29,7 @@ steps:
       nugetConfigPath: 'nuget.config'
       restoreArguments: '/property:Configuration=$(BuildConfiguration)'
       
-  - task: SonarCloudPrepare@2
+  - task: SonarCloudPrepare@3
     inputs:
       SonarCloud: 'rs200x'
       organization: 'rs200x-github'
@@ -57,9 +57,9 @@ steps:
       codeCoverageEnabled: true
       runSettingsFile: '$(System.DefaultWorkingDirectory)\CodeCoverage.runsettings'
       
-  - task: SonarCloudAnalyze@2
+  - task: SonarCloudAnalyze@3
 
-  - task: BuildQualityChecks@8
+  - task: BuildQualityChecks@9
     continueOnError: true
     inputs:
       checkWarnings: true
@@ -104,6 +104,6 @@ steps:
       publishVstsFeed: '318ba8a7-6ebb-41b0-994d-1baee3e08af0'
       allowPackageConflicts: true
       
-  - task: SonarCloudPublish@2
+  - task: SonarCloudPublish@3
     inputs:
       pollingTimeoutSec: "300"
