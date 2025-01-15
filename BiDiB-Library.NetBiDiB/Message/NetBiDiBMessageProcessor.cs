@@ -186,8 +186,16 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
             CurrentParticipant.RequestorName = protocolSignature.Emitter;
             CurrentState = NetBiDiBConnectionState.WaitForId;
             SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_UID, UniqueId));
-            SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_PROD_STRING, Emitter.GetBytes()));
-            SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_USER_STRING, Username.GetBytes()));
+            try
+            {
+                SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_PROD_STRING, Emitter.GetBytes()));
+                SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_USER_STRING, Username.GetBytes()));
+            }
+            catch (OverflowException e)
+            {
+                logger.LogError(e, "Descriptors with {Emitter}/{User} could not be send", Emitter, Username);
+            }
+
             SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_P_VERSION, [0, 8]));
             SendMessage(new LocalLinkOutMessage(LocalLinkType.DESCRIPTOR_ROLE, [(byte) ClientRole]));
         }
