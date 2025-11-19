@@ -234,7 +234,7 @@ public class NetBiDiBMessageProcessor(ILoggerFactory loggerFactory) : INetBiDiBM
             case LocalLinkType.DESCRIPTOR_P_VERSION:
             {
                 CurrentParticipant.ProtocolVersion =
-                    $"{string.Join(".", linkMessage.Data.Reverse().Select(x => x.ToString(CultureInfo.CurrentCulture)))}";
+                    $"{string.Join(".", linkMessage.Data.Reversed().Select(x => x.ToString(CultureInfo.CurrentCulture)))}";
                 break;
             }
             case LocalLinkType.DESCRIPTOR_USER_STRING:
